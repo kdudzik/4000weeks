@@ -16,8 +16,8 @@ import {
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export default function WeekGrid({ birthday, events, categories, highlightEventId, filterCatId, filterEventColors, calendarMode, onCellSelect, density = 'dense' }) {
-  const CELL_SIZE = density === 'dense' ? 10 : 13
-  const CELL_GAP = density === 'dense' ? 2 : 3
+  const CELL_SIZE = density === 'dense' ? 10 : 15
+  const CELL_GAP = density === 'dense' ? 1 : 2
   const CELL_STEP = CELL_SIZE + CELL_GAP
   const LABEL_W = 32
   const HEADER_H = 24
@@ -267,7 +267,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
                   key={index}
                   x={x} y={y}
                   width={CELL_SIZE} height={CELL_SIZE}
-                  rx={2}
+                  rx={0}
                   fill={fill}
                   opacity={opacity}
                   style={{ cursor: isPreBirth ? 'default' : isDragging ? 'crosshair' : 'pointer' }}
@@ -289,7 +289,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
                 <rect
                   x={c * CELL_STEP - 1} y={r * CELL_STEP - 1}
                   width={CELL_SIZE + 2} height={CELL_SIZE + 2}
-                  rx={3} fill="none"
+                  rx={0} fill="none"
                   stroke="var(--accent)" strokeWidth={1} opacity={0.6}
                 />
               )
