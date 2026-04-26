@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const HEX_COLORS = [
   '#f472b6', '#fb7185', '#fb923c', '#fbbf24',
@@ -6,18 +6,24 @@ const HEX_COLORS = [
   '#818cf8', '#a78bfa', '#e879f9', '#94a3b8',
 ]
 
-export default function AddEventModal({ categories, onAdd, onClose, editEvent }) {
+export default function AddEventModal({ categories, onAdd, onClose, editEvent, defaultCategoryId, defaultStartDate, defaultEndDate }) {
   const initial = editEvent || {}
   const [label, setLabel] = useState(initial.label || '')
-  const [categoryId, setCategoryId] = useState(initial.categoryId || categories[0]?.id || '')
+  const [categoryId, setCategoryId] = useState(initial.categoryId || defaultCategoryId || categories[0]?.id || '')
   const [color, setColor] = useState(initial.color || null)
-  const [startDate, setStartDate] = useState(initial.startDate || '')
-  const [endDate, setEndDate] = useState(initial.endDate || '')
+  const [startDate, setStartDate] = useState(initial.startDate || defaultStartDate || '')
+  const [endDate, setEndDate] = useState(initial.endDate || defaultEndDate || '')
   const [note, setNote] = useState(initial.note || '')
   // 'single' | 'range' | 'ongoing'
   const [mode, setMode] = useState(
-    initial.ongoing ? 'ongoing' : initial.endDate ? 'range' : 'single'
+    initial.ongoing ? 'ongoing' : (initial.endDate || defaultEndDate) ? 'range' : 'single'
   )
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
 
   const selectedCat = categories.find(c => c.id === categoryId)
   const displayColor = color || selectedCat?.color || '#888'
@@ -42,7 +48,7 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent })
       <div className="modal animate-fade-in">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{
-            fontFamily: "'Playfair Display', serif",
+            fontFamily: "'JetBrains Mono', monospace",
             fontSize: 20,
             fontWeight: 400,
             color: 'var(--text-primary)',

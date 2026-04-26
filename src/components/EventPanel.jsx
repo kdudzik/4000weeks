@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import AddEventModal from './AddEventModal'
 import CategoryModal from './CategoryModal'
 
@@ -9,6 +9,7 @@ export default function EventPanel({
   onHighlight, highlightEventId,
   filterCatId, onFilterCat, filterEventColors,
   birthday, name,
+  onUpdateBirthday, onUpdateName,
   onReset, onExport, onImport,
 }) {
   const [tab, setTab] = useState('events') // 'events' | 'categories'
@@ -18,6 +19,18 @@ export default function EventPanel({
   const [editingEvent, setEditingEvent] = useState(null)
   const [showCatModal, setShowCatModal] = useState(false)
   const [editingCat, setEditingCat] = useState(null)
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [draftName, setDraftName] = useState('')
+  const [draftBirthday, setDraftBirthday] = useState('')
+
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+
+  useEffect(() => {
+    if (!confirmDeleteId) return
+    const handler = (e) => { if (e.key === 'Escape') setConfirmDeleteId(null) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [confirmDeleteId])
 
   const [collapsed, setCollapsed] = useState(false)
 
@@ -96,18 +109,66 @@ export default function EventPanel({
         borderBottom: '1px solid var(--border-subtle)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 16, color: 'var(--text-primary)', fontWeight: 400 }}>
-              {name || 'Your life'}
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-              b. {birthday}
-            </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {editingProfile ? (
+              <form onSubmit={e => {
+                e.preventDefault()
+                if (draftBirthday) onUpdateBirthday(draftBirthday)
+                onUpdateName(draftName)
+                setEditingProfile(false)
+              }} onKeyDown={e => { if (e.key === 'Escape') setEditingProfile(false) }} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <input
+                  autoFocus
+                  value={draftName}
+                  onChange={e => setDraftName(e.target.value)}
+                  placeholder="Your name"
+                  style={{
+                    background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 4, padding: '3px 6px', fontSize: 13,
+                    color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace", width: '100%',
+                  }}
+                />
+                <input
+                  type="date"
+                  value={draftBirthday}
+                  onChange={e => setDraftBirthday(e.target.value)}
+                  required
+                  style={{
+                    background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 4, padding: '3px 6px', fontSize: 11,
+                    color: 'var(--text-primary)', width: '100%',
+                  }}
+                />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button type="submit" style={{
+                    fontSize: 10, padding: '2px 8px', borderRadius: 4,
+                    background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer',
+                  }}>save</button>
+                  <button type="button" onClick={() => setEditingProfile(false)} style={{
+                    fontSize: 10, padding: '2px 8px', borderRadius: 4,
+                    background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)', cursor: 'pointer',
+                  }}>cancel</button>
+                </div>
+              </form>
+            ) : (
+              <div
+                onClick={() => { setDraftName(name || ''); setDraftBirthday(birthday || ''); setEditingProfile(true) }}
+                style={{ cursor: 'pointer' }}
+                title="Edit name & birthdate"
+              >
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 16, color: 'var(--text-primary)', fontWeight: 400 }}>
+                  {name || 'Your life'}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                  b. {birthday}
+                </div>
+              </div>
+            )}
           </div>
           <button
             className="btn-icon"
             onClick={() => setCollapsed(true)}
-            style={{ fontSize: 16, color: 'var(--text-muted)' }}
+            style={{ fontSize: 16, color: 'var(--text-muted)', alignSelf: 'flex-start' }}
           >
             ›
           </button>
@@ -185,6 +246,7 @@ export default function EventPanel({
               return (
                 <div
                   key={ev.id}
+                  onClick={() => handleEditEvent(ev)}
                   onMouseEnter={() => onHighlight(ev.id)}
                   onMouseLeave={() => onHighlight(null)}
                   style={{
@@ -210,10 +272,7 @@ export default function EventPanel({
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-                    <button className="btn-icon" onClick={e => { e.stopPropagation(); handleEditEvent(ev) }} style={{ fontSize: 12 }}>✎</button>
-                    <button className="btn-icon" onClick={e => { e.stopPropagation(); onDeleteEvent(ev.id) }} style={{ fontSize: 14, color: '#ef444460' }}>×</button>
-                  </div>
+                  <button className="btn-icon" onClick={e => { e.stopPropagation(); setConfirmDeleteId(ev.id) }} style={{ fontSize: 18, padding: '2px 6px', color: '#ef444460', flexShrink: 0 }}>×</button>
                 </div>
               )
             })}
@@ -241,6 +300,9 @@ export default function EventPanel({
       {/* Categories tab */}
       {tab === 'categories' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ padding: '8px 14px 4px', fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+            Each category is a visual layer — create separate ones for parallel tracks.
+          </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
             {categories.map(cat => (
               <div
@@ -257,7 +319,6 @@ export default function EventPanel({
                 <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
                   {events.filter(e => e.categoryId === cat.id).length} events
                 </span>
-                <button className="btn-icon" style={{ fontSize: 12 }}>✎</button>
               </div>
             ))}
           </div>
@@ -282,10 +343,34 @@ export default function EventPanel({
         <AddEventModal
           categories={categories}
           editEvent={editingEvent}
+          defaultCategoryId={!editingEvent && filterCatId ? filterCatId : null}
           onAdd={handleAddOrUpdate}
           onClose={() => { setShowAddEvent(false); setEditingEvent(null) }}
         />
       )}
+
+      {confirmDeleteId && (() => {
+        const ev = events.find(e => e.id === confirmDeleteId)
+        return (
+          <div className="modal-overlay" onClick={() => setConfirmDeleteId(null)}>
+            <div className="modal animate-fade-in" style={{ width: 320 }} onClick={e => e.stopPropagation()}>
+              <div style={{ marginBottom: 16, fontSize: 14, color: 'var(--text-primary)' }}>
+                Delete <strong>{ev?.label}</strong>?
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button className="btn-ghost" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                <button
+                  className="btn-primary"
+                  style={{ background: '#ef4444', borderColor: '#ef4444' }}
+                  onClick={() => { onDeleteEvent(confirmDeleteId); setConfirmDeleteId(null) }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {showCatModal && (
         <CategoryModal

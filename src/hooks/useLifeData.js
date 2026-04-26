@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const DEFAULT_CATEGORIES = [
-  { id: 'kindergarten', label: 'Kindergarten', color: '#7dd3fc', icon: '🧸' },
-  { id: 'school', label: 'School', color: '#6ee7b7', icon: '📚' },
-  { id: 'university', label: 'University', color: '#86efac', icon: '🎓' },
-  { id: 'job', label: 'Job', color: '#fbbf24', icon: '💼' },
-  { id: 'relationship', label: 'Relationship', color: '#f472b6', icon: '❤️' },
-  { id: 'travel', label: 'Travel', color: '#60a5fa', icon: '✈️' },
-  { id: 'home', label: 'Home / Move', color: '#a78bfa', icon: '🏠' },
-  { id: 'birth', label: 'Birth', color: '#34d399', icon: '🌱' },
-  { id: 'death', label: 'Death', color: '#9ca3af', icon: '🕯️' },
-  { id: 'health', label: 'Health', color: '#fb923c', icon: '🏥' },
-  { id: 'other', label: 'Other', color: '#e879f9', icon: '✦' },
+  { id: 'home',         label: 'Home',          color: '#6ee7b7', icon: '🏠' },
+  { id: 'school',       label: 'School',        color: '#93c5fd', icon: '📚' },
+  { id: 'university',   label: 'University',    color: '#60a5fa', icon: '🎓' },
+  { id: 'job',          label: 'Job',           color: '#fbbf24', icon: '💼' },
+  { id: 'relationship', label: 'Relationship',  color: '#f9a8d4', icon: '❤️' },
+  { id: 'travel',       label: 'Travel',        color: '#a78bfa', icon: '✈️' },
+  { id: 'health',       label: 'Health',        color: '#fb923c', icon: '🏥' },
+  { id: 'birth',        label: 'Birth',         color: '#34d399', icon: '🌱' },
+  { id: 'death',        label: 'Death',         color: '#9ca3af', icon: '🕯️' },
+  { id: 'other',        label: 'Other',         color: '#e879f9', icon: '💠'  },
 ]
 
 function load(key, fallback) {
@@ -35,10 +34,10 @@ export function useLifeData() {
     // Merge: add any presets not already present by id
     if (!stored) return DEFAULT_CATEGORIES
     const storedIds = new Set(stored.map(c => c.id))
-    const merged = [...stored]
-    for (const preset of DEFAULT_CATEGORIES) {
-      if (!storedIds.has(preset.id)) merged.push(preset)
-    }
+    const missing = DEFAULT_CATEGORIES.filter(p => !storedIds.has(p.id))
+    if (missing.length === 0) return stored
+    const merged = [...stored, ...missing]
+    save('4kw_categories', merged)
     return merged
   })
   const [events, setEventsState] = useState(() => load('4kw_events', []))
@@ -138,7 +137,9 @@ export function useLifeData() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `4000weeks-${data.birthday || 'export'}-${new Date().toISOString().slice(0, 10)}.json`
+    const slug = (data.name || 'export').toLowerCase().replace(/\s+/g, '-')
+    const ts = new Date().toISOString().replace(/:/g, '-').slice(0, 19)
+    a.download = `4000weeks-${slug}-${ts}.json`
     a.click()
     URL.revokeObjectURL(url)
   }, [])
@@ -150,11 +151,14 @@ export function useLifeData() {
     }
     save('4kw_birthday', data.birthday)
     save('4kw_name', data.name || '')
-    save('4kw_categories', data.categories)
+    const storedIds = new Set(data.categories.map(c => c.id))
+    const missing = DEFAULT_CATEGORIES.filter(p => !storedIds.has(p.id))
+    const mergedCats = missing.length ? [...data.categories, ...missing] : data.categories
+    save('4kw_categories', mergedCats)
     save('4kw_events', data.events)
     setBirthdayState(data.birthday)
     setNameState(data.name || '')
-    setCategoriesState(data.categories)
+    setCategoriesState(mergedCats)
     setEventsState(data.events)
   }, [])
 

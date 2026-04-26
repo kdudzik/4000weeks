@@ -49,7 +49,7 @@ export default function SetupScreen({ onComplete }) {
         </div>
 
         <h1 style={{
-          fontFamily: "'Playfair Display', serif",
+          fontFamily: "'JetBrains Mono', monospace",
           fontSize: 'clamp(32px, 6vw, 52px)',
           fontWeight: 400,
           color: 'var(--accent)',

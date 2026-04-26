@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const PRESET_COLORS = [
   '#f472b6', '#fb7185', '#fb923c', '#fbbf24',
@@ -11,6 +11,12 @@ export default function CategoryModal({ category, onSave, onDelete, onClose }) {
   const [label, setLabel] = useState(category?.label || '')
   const [color, setColor] = useState(category?.color || PRESET_COLORS[0])
   const [icon, setIcon] = useState(category?.icon || '')
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -29,7 +35,7 @@ export default function CategoryModal({ category, onSave, onDelete, onClose }) {
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ width: 360 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, fontWeight: 400, color: 'var(--text-primary)' }}>
+          <h2 style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 400, color: 'var(--text-primary)' }}>
             {isNew ? 'New category' : 'Edit category'}
           </h2>
           <button className="btn-icon" onClick={onClose} style={{ fontSize: 18 }}>×</button>

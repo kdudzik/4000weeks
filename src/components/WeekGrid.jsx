@@ -21,8 +21,11 @@ const HEADER_H = 24
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-export default function WeekGrid({ birthday, events, categories, highlightEventId, filterCatId, filterEventColors, calendarMode }) {
+export default function WeekGrid({ birthday, events, categories, highlightEventId, filterCatId, filterEventColors, calendarMode, onCellSelect }) {
   const [tooltip, setTooltip] = useState(null)
+  const [dragStart, setDragStart] = useState(null)
+  const [dragEnd, setDragEnd] = useState(null)
+  const isDragging = dragStart !== null
   const containerRef = useRef(null)
 
   const enriched = useMemo(() => enrichEvents(events, birthday), [events, birthday])
@@ -111,6 +114,10 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
 
   const handleMouseEnter = useCallback((e, cell) => {
     const { index, row, isPast, isToday, isPreBirth, cellDate, eventInfos, filteredEventIds } = cell
+    if (isDragging) {
+      setDragEnd(index)
+      return
+    }
     if (calendarMode) {
       setTooltip({
         x: e.clientX, y: e.clientY,
@@ -130,13 +137,43 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
         isPreBirth: false,
       })
     }
-  }, [birthday, calendarMode, birthYear])
+  }, [birthday, calendarMode, birthYear, isDragging])
 
   const handleMouseMove = useCallback((e) => {
-    if (tooltip) setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null)
-  }, [tooltip])
+    if (!isDragging && tooltip) setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null)
+  }, [isDragging, tooltip])
 
-  const handleMouseLeave = useCallback(() => setTooltip(null), [])
+  const handleMouseLeave = useCallback(() => {
+    if (!isDragging) setTooltip(null)
+  }, [isDragging])
+
+  const handleCellMouseDown = useCallback((e, cell) => {
+    if (cell.isPreBirth) return
+    e.preventDefault()
+    setTooltip(null)
+    setDragStart(cell.index)
+    setDragEnd(cell.index)
+  }, [])
+
+  // Finalize drag on mouseup anywhere on the SVG
+  const handleSvgMouseUp = useCallback(() => {
+    if (dragStart === null) return
+    const lo = Math.min(dragStart, dragEnd ?? dragStart)
+    const hi = Math.max(dragStart, dragEnd ?? dragStart)
+    setDragStart(null)
+    setDragEnd(null)
+    if (!onCellSelect) return
+    let startDate, endDate
+    if (calendarMode) {
+      startDate = calWeekIndexToDate(birthday, lo)
+      endDate = lo === hi ? null : calWeekIndexToDate(birthday, hi)
+    } else {
+      startDate = weekIndexToDate(birthday, lo)
+      endDate = lo === hi ? null : weekIndexToDate(birthday, hi)
+    }
+    const fmt = d => format(d, 'yyyy-MM-dd')
+    onCellSelect(fmt(startDate), endDate ? fmt(endDate) : null)
+  }, [dragStart, dragEnd, calendarMode, birthday, onCellSelect])
 
   const gridW = WEEKS_PER_ROW * CELL_STEP - CELL_GAP
   const gridH = TOTAL_ROWS * CELL_STEP - CELL_GAP
@@ -200,20 +237,30 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
           </div>
 
           {/* SVG cells */}
-          <svg width={gridW} height={gridH} style={{ overflow: 'visible', display: 'block' }}>
-            {cells.map((cell) => {
-              const { index, row, col, color, eventInfos, isPast, isToday, isPreBirth } = cell
+          <svg
+            width={gridW} height={gridH}
+            style={{ overflow: 'visible', display: 'block', userSelect: 'none' }}
+            onMouseUp={handleSvgMouseUp}
+          >
+            {(() => {
+              const dragLo = dragStart !== null ? Math.min(dragStart, dragEnd ?? dragStart) : -1
+              const dragHi = dragStart !== null ? Math.max(dragStart, dragEnd ?? dragStart) : -1
+              return cells.map((cell) => {
+              const { index, row, col, color, isPast, isToday, isPreBirth } = cell
               const x = col * CELL_STEP
               const y = row * CELL_STEP
 
+              const inDrag = dragStart !== null && index >= dragLo && index <= dragHi && !isPreBirth
+
               let fill
               if (isPreBirth) fill = 'var(--bg-secondary)'
+              else if (inDrag) fill = 'var(--accent)'
               else if (isToday) fill = 'var(--week-today)'
               else if (color) fill = color
               else if (isPast) fill = 'var(--week-past-empty)'
               else fill = 'var(--week-future)'
 
-              const opacity = isPreBirth ? 0.3 : color ? (isPast || isToday ? 1 : 0.35) : 1
+              const opacity = isPreBirth ? 0.3 : inDrag ? 0.7 : color ? (isPast || isToday ? 1 : 0.35) : 1
 
               return (
                 <rect
@@ -223,12 +270,14 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
                   rx={2}
                   fill={fill}
                   opacity={opacity}
-                  style={{ cursor: eventInfos.length ? 'crosshair' : 'default' }}
+                  style={{ cursor: isPreBirth ? 'default' : isDragging ? 'crosshair' : 'pointer' }}
                   onMouseEnter={e => handleMouseEnter(e, cell)}
                   onMouseLeave={handleMouseLeave}
+                  onMouseDown={e => handleCellMouseDown(e, cell)}
                 />
               )
-            })}
+            })
+            })()}
 
             {/* Today marker */}
             {(() => {

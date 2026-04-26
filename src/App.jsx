@@ -3,6 +3,7 @@ import { useLifeData } from './hooks/useLifeData'
 import SetupScreen from './components/SetupScreen'
 import WeekGrid from './components/WeekGrid'
 import EventPanel from './components/EventPanel'
+import AddEventModal from './components/AddEventModal'
 import { enrichEvents, currentWeekIndex } from './utils/dateUtils'
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
   const [highlightEventId, setHighlightEventId] = useState(null)
   const [filterCatId, setFilterCatId] = useState(null)
   const [calendarMode, setCalendarMode] = useState(false)
+  const [quickAddDefaults, setQuickAddDefaults] = useState(null)
 
   const filterEventColors = useMemo(() => {
     if (!filterCatId || !birthday) return null
@@ -53,7 +55,7 @@ function App() {
           background: 'var(--bg-primary)',
           flexShrink: 0,
         }}>
-          <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, color: 'var(--accent)', letterSpacing: '-0.3px' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 19, fontWeight: 600, fontStyle: 'italic', color: 'var(--accent)', letterSpacing: '-0.5px' }}>
             4,000 Weeks
           </span>
           <span style={{ color: 'var(--text-muted)', fontSize: 10, letterSpacing: '0.15em' }}>
@@ -96,8 +98,20 @@ function App() {
           filterCatId={filterCatId}
           filterEventColors={filterEventColors}
           calendarMode={calendarMode}
+          onCellSelect={(startDate, endDate) => setQuickAddDefaults({ startDate, endDate })}
         />
       </div>
+
+      {quickAddDefaults && (
+        <AddEventModal
+          categories={categories}
+          defaultStartDate={quickAddDefaults.startDate}
+          defaultEndDate={quickAddDefaults.endDate}
+          defaultCategoryId={filterCatId || undefined}
+          onAdd={ev => { addEvent(ev); setQuickAddDefaults(null) }}
+          onClose={() => setQuickAddDefaults(null)}
+        />
+      )}
 
       <EventPanel
         events={events}
@@ -115,6 +129,8 @@ function App() {
         highlightEventId={highlightEventId}
         birthday={birthday}
         name={name}
+        onUpdateBirthday={setBirthday}
+        onUpdateName={setName}
         onReset={reset}
         onExport={exportData}
         onImport={importData}

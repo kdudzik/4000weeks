@@ -88,25 +88,39 @@ export function getCalBase(birthday) {
   return startOfWeek(new Date(birthYear, 0, 1), { weekStartsOn: 1 })
 }
 
-/** Weeks from calendar base to a date string. */
+/** Weeks from calendar base to a date string.
+ *  Uses (year - birthYear) * 52 + weekWithinYear so each row always
+ *  corresponds to exactly one calendar year, regardless of 52/53-week years.
+ */
 export function dateToCalWeekIndex(birthday, dateStr) {
-  const base = getCalBase(birthday)
-  const target = startOfWeek(parseISO(dateStr), { weekStartsOn: 1 })
-  return differenceInCalendarWeeks(target, base, { weekStartsOn: 1 })
+  const birthYear = getYear(parseISO(birthday))
+  const date = parseISO(dateStr)
+  const year = getYear(date)
+  const yearBase = startOfWeek(new Date(year, 0, 1), { weekStartsOn: 1 })
+  const weekInYear = differenceInCalendarWeeks(
+    startOfWeek(date, { weekStartsOn: 1 }),
+    yearBase,
+    { weekStartsOn: 1 }
+  )
+  return (year - birthYear) * 52 + Math.min(weekInYear, 51)
 }
 
 /** Date for a given calendar grid index. */
 export function calWeekIndexToDate(birthday, calIndex) {
-  return addWeeks(getCalBase(birthday), calIndex)
+  const birthYear = getYear(parseISO(birthday))
+  const year = birthYear + Math.floor(calIndex / 52)
+  const week = calIndex % 52
+  const yearBase = startOfWeek(new Date(year, 0, 1), { weekStartsOn: 1 })
+  return addWeeks(yearBase, week)
 }
 
 /** Column positions (0-based) for each month in the birth year. */
 export function getMonthCols(birthday) {
-  const base = getCalBase(birthday)
   const birthYear = getYear(parseISO(birthday))
+  const yearBase = startOfWeek(new Date(birthYear, 0, 1), { weekStartsOn: 1 })
   return Array.from({ length: 12 }, (_, m) => {
     const monthStart = startOfWeek(new Date(birthYear, m, 1), { weekStartsOn: 1 })
-    return differenceInCalendarWeeks(monthStart, base, { weekStartsOn: 1 })
+    return differenceInCalendarWeeks(monthStart, yearBase, { weekStartsOn: 1 })
   })
 }
 
