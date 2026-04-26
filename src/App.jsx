@@ -59,7 +59,8 @@ function App() {
     }))
   }, [filterCatId, events, birthday])
 
-  const handleClearDemo = () => {
+  const handleClearDemo = (skipConfirm = false) => {
+    if (!skipConfirm && !window.confirm('This will delete all demo data and start fresh. Continue?')) return
     reset()
     setIsDemo(false)
     localStorage.removeItem('4kw_is_demo')
@@ -98,7 +99,7 @@ function App() {
         }}>
           <span>You're viewing demo data — Alex Rivera, 37.</span>
           <button
-            onClick={handleClearDemo}
+            onClick={() => handleClearDemo(false)}
             style={{
               background: 'var(--accent-text)', color: 'var(--accent)',
               border: 'none', borderRadius: 4,
@@ -250,7 +251,7 @@ function App() {
         name={name}
         onUpdateBirthday={setBirthday}
         onUpdateName={setName}
-        onReset={handleClearDemo}
+        onReset={() => handleClearDemo(true)}
         onExport={exportData}
         onImport={handleImport}
         density={fontSize}

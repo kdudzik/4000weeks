@@ -27,6 +27,17 @@ export default function EventPanel({
   const [draftBirthday, setDraftBirthday] = useState('')
 
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!showMenu) return
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setShowMenu(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showMenu])
 
   useEffect(() => {
     if (!confirmDeleteId) return
@@ -320,9 +331,33 @@ export default function EventPanel({
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', letterSpacing: '0.03em' }}>
               or click · drag on the grid
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8 }}>
               <button className="btn-ghost" style={{ fontSize: 11 }} onClick={onExport}>↓ Export</button>
               <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => fileInputRef.current?.click()}>↑ Import</button>
+              <div ref={menuRef} style={{ position: 'relative' }}>
+                <button className="btn-ghost" style={{ fontSize: 14, padding: 0, height: '100%', aspectRatio: '1', color: '#ef444460', borderColor: '#ef444420' }} onClick={() => setShowMenu(v => !v)}>🗑</button>
+                {showMenu && (
+                  <div style={{
+                    position: 'absolute', bottom: '100%', right: 0, marginBottom: 4,
+                    background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 6, padding: '4px 0', minWidth: 140, zIndex: 100,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  }}>
+                    <button
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '6px 12px', fontSize: 11, background: 'none', border: 'none',
+                        color: '#ef444490', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                      onMouseEnter={e => e.target.style.background = 'var(--bg-hover)'}
+                      onMouseLeave={e => e.target.style.background = 'none'}
+                      onClick={() => { setShowMenu(false); if (window.confirm('Reset all data?')) onReset() }}
+                    >
+                      Reset all data
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <input ref={fileInputRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={handleImportFile} />
             {importError && <div style={{ fontSize: 11, color: '#ef4444', textAlign: 'center' }}>{importError}</div>}
@@ -359,13 +394,6 @@ export default function EventPanel({
             <button className="btn-primary" style={{ width: '100%' }}
               onClick={() => { setEditingCat(null); setShowCatModal(true) }}>
               + New category
-            </button>
-            <button
-              className="btn-ghost"
-              style={{ width: '100%', fontSize: 11, color: '#ef444460', borderColor: '#ef444420' }}
-              onClick={() => { if (window.confirm('Reset all data?')) onReset() }}
-            >
-              Reset all data
             </button>
           </div>
         </div>

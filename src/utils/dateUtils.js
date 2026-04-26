@@ -5,7 +5,6 @@ import {
   endOfWeek,
   differenceInCalendarWeeks,
   differenceInCalendarYears,
-  differenceInWeeks,
   differenceInMonths,
   isAfter,
   isBefore,
@@ -132,9 +131,10 @@ export function formatEventDuration(startDate, endDate, ongoing) {
   if (!endDate && !ongoing) return null
   const start = parseLocal(startDate)
   const end = ongoing ? new Date() : parseLocal(endDate)
-  const weeks = Math.max(1, Math.abs(differenceInWeeks(end, start)))
+  const days = Math.abs(end - start) / 86400000
+  const weeks = Math.max(1, Math.round(days / 7))
   if (weeks < 9) return `${weeks} week${weeks === 1 ? '' : 's'}`
-  const months = Math.abs(differenceInMonths(end, start))
+  const months = Math.round(days / 30.44)
   if (months < 25) return `${months} month${months === 1 ? '' : 's'}`
   const years = (months / 12).toFixed(1)
   return `${years} yrs`
