@@ -5,6 +5,8 @@ import {
   endOfWeek,
   differenceInCalendarWeeks,
   differenceInCalendarYears,
+  differenceInWeeks,
+  differenceInMonths,
   isAfter,
   isBefore,
   isEqual,
@@ -102,6 +104,41 @@ export function currentWeekIndex(birthday) {
 export function formatWeekRange(weekStart) {
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
   return `${format(weekStart, 'dd MMM yyyy')} – ${format(weekEnd, 'dd MMM yyyy')}`
+}
+
+/**
+ * Human-readable label for an event's time.
+ * - Single event (no endDate, not ongoing): "age X" relative to birthday
+ * - Range or ongoing: duration like "14 wks", "8 mos", "3.2 yrs"
+ */
+function ageAt(date, birthdayStr) {
+  const months = differenceInMonths(date, parseLocal(birthdayStr))
+  return months < 25 ? Math.round(months / 12 * 10) / 10 : Math.floor(months / 12)
+}
+
+/**
+ * Human-readable label for an event's time.
+ * With birthday: "age X" for single, "age X–Y" for range/ongoing.
+ * Without birthday: duration like "14 weeks", "8 months", "3.2 yrs".
+ */
+export function formatEventDuration(startDate, endDate, ongoing, birthday) {
+  const start = parseLocal(startDate)
+  if (birthday) {
+    const startAge = ageAt(start, birthday)
+    if (!endDate && !ongoing) return `age ${startAge}`
+    const end = ongoing ? new Date() : parseLocal(endDate)
+    const endAge = ageAt(end, birthday)
+    if (ongoing) return `age ${startAge}–`
+    return startAge === endAge ? `age ${startAge}` : `age ${startAge}–${endAge}`
+  }
+  if (!endDate && !ongoing) return '1 week'
+  const end = ongoing ? new Date() : parseLocal(endDate)
+  const weeks = Math.max(1, Math.abs(differenceInWeeks(end, start)))
+  if (weeks < 9) return `${weeks} week${weeks === 1 ? '' : 's'}`
+  const months = Math.abs(differenceInMonths(end, start))
+  if (months < 25) return `${months} month${months === 1 ? '' : 's'}`
+  const years = (months / 12).toFixed(1)
+  return `${years} yrs`
 }
 
 // ── Calendar mode utilities ──────────────────────────────────────────────────
