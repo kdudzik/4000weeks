@@ -12,11 +12,36 @@
   --text-primary: #f0eadc;
   --text-secondary: #a89ab0;
   --text-muted: #6a6080;
-  --accent: #d4b896;
+  --accent: #D5B892;
+  --accent-text: #1a1210;
   --accent-glow: rgba(212, 184, 150, 0.18);
   --week-past-empty: #242438;
   --week-future: #0a0a12;
   --week-today: #48487a;
+  --shadow-tooltip: 0 8px 32px rgba(0,0,0,0.6);
+  --shadow-modal: 0 24px 64px rgba(0,0,0,0.8);
+  --modal-overlay-bg: rgba(0,0,0,0.7);
+}
+
+[data-theme="light"] {
+  --bg-primary: #f7f2ea;
+  --bg-secondary: #ede7da;
+  --bg-panel: #e9e2d4;
+  --bg-hover: #ddd5c4;
+  --border: #b8aa94;
+  --border-subtle: #cec4b0;
+  --text-primary: #1e1a14;
+  --text-secondary: #5c5040;
+  --text-muted: #8c7c68;
+  --accent: #D5B892;
+  --accent-text: #1a1210;
+  --accent-glow: rgba(213, 184, 146, 0.18);
+  --week-past-empty: #c0b8ac;
+  --week-future: #ddd6c8;
+  --week-today: #6050a0;
+  --shadow-tooltip: 0 8px 32px rgba(0,0,0,0.18);
+  --shadow-modal: 0 24px 64px rgba(0,0,0,0.22);
+  --modal-overlay-bg: rgba(0,0,0,0.35);
 }
 
 * {
@@ -73,14 +98,14 @@ body {
   border-radius: 6px;
   padding: 8px 12px;
   max-width: 220px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  box-shadow: var(--shadow-tooltip);
   backdrop-filter: blur(8px);
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: var(--modal-overlay-bg);
   backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
@@ -98,7 +123,7 @@ body {
   max-height: calc(100vh - 80px);
   overflow-y: auto;
   animation: fade-in 0.25s ease;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+  box-shadow: var(--shadow-modal);
 }
 
 input, select, textarea {
@@ -147,7 +172,7 @@ button {
 
 .btn-primary {
   background: var(--accent);
-  color: #1a1210;
+  color: var(--accent-text);
   padding: 9px 18px;
   font-weight: 500;
   letter-spacing: 0.05em;

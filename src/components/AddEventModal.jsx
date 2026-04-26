@@ -96,7 +96,7 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent, d
                   style={{
                     width: 20, height: 20, borderRadius: 4,
                     background: c, border: 'none', padding: 0, cursor: 'pointer',
-                    outline: color === c ? `2px solid white` : `2px solid transparent`,
+                    outline: color === c ? `2px solid var(--text-primary)` : `2px solid transparent`,
                     outlineOffset: 2,
                     opacity: color && color !== c ? 0.4 : 1,
                     transition: 'all 0.15s',

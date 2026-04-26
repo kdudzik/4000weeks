@@ -62,7 +62,7 @@ export default function CategoryModal({ category, onSave, onDelete, onClose }) {
                   onClick={() => setColor(c)}
                   style={{
                     width: 24, height: 24, borderRadius: 4, background: c, border: 'none', padding: 0, cursor: 'pointer',
-                    outline: color === c ? '2px solid white' : '2px solid transparent',
+                    outline: color === c ? '2px solid var(--text-primary)' : '2px solid transparent',
                     outlineOffset: 2,
                     transition: 'all 0.15s',
                   }}

@@ -157,7 +157,7 @@ export default function EventPanel({
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button type="submit" style={{
                     fontSize: 10, padding: '2px 8px', borderRadius: 4,
-                    background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer',
+                    background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', cursor: 'pointer',
                   }}>save</button>
                   <button type="button" onClick={() => setEditingProfile(false)} style={{
                     fontSize: 10, padding: '2px 8px', borderRadius: 4,
@@ -232,15 +232,15 @@ export default function EventPanel({
                 onClick={() => onFilterCat(filterCatId === cat.id ? null : cat.id)}
                 style={{
                   fontSize: 10, padding: '3px 8px', borderRadius: 4,
-                  background: filterCatId === cat.id ? cat.color : 'var(--bg-secondary)',
-                  color: filterCatId === cat.id ? '#1a1210' : 'var(--text-secondary)',
+                  background: filterCatId === cat.id ? 'var(--accent)' : 'var(--bg-secondary)',
+                  color: filterCatId === cat.id ? 'var(--accent-text)' : 'var(--text-secondary)',
                   border: `1px solid ${filterCatId === cat.id ? 'transparent' : 'var(--border)'}`,
                   opacity: events.some(e => e.categoryId === cat.id) ? 1 : 0.35,
                   cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}
               >
-                <span style={{ width: 6, height: 6, borderRadius: 2, background: filterCatId === cat.id ? '#1a1210' : cat.color, flexShrink: 0, display: 'inline-block' }} />
+                <span style={{ width: 6, height: 6, borderRadius: 2, background: cat.color, flexShrink: 0, display: 'inline-block' }} />
                 {cat.label}
               </button>
             ))}
