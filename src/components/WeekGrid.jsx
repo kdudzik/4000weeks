@@ -132,13 +132,11 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
     const { index, row, isPreBirth, cellDate, eventInfos, filteredEventIds } = cell
     if (isDragging) { setDragEnd(index); return }
 
-    const label = calendarMode
-      ? esc(birthYear + row)
-      : `Age ${esc(row)} · Week ${esc(index % WEEKS_PER_ROW + 1)}`
+    const ageLabel = `Age ${esc(row)} · Week ${esc(index % WEEKS_PER_ROW + 1)}`
     const weekStart = calendarMode ? cellDate : weekIndexToDate(birthday, index)
     const range = esc(formatWeekRange(weekStart))
 
-    let html = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">${label}</div>`
+    let html = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">${ageLabel}</div>`
     if (isPreBirth) {
       html += `<div style="font-size:10px;color:var(--text-muted);font-style:italic">before birth</div>`
     } else {
