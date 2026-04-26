@@ -11,7 +11,9 @@ export default function EventPanel({
   birthday, name,
   onUpdateBirthday, onUpdateName,
   onReset, onExport, onImport,
+  density = 'dense',
 }) {
+  const zoom = density === 'dense' ? 1 : 1.18
   const [tab, setTab] = useState('events') // 'events' | 'categories'
   const [importError, setImportError] = useState(null)
   const fileInputRef = useRef(null)
@@ -91,6 +93,7 @@ export default function EventPanel({
         borderLeft: '1px solid var(--border)',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         paddingTop: 16, gap: 16,
+        zoom,
       }}>
         <button
           className="btn-icon"
@@ -107,6 +110,7 @@ export default function EventPanel({
   return (
     <div style={{
       width: 375, flexShrink: 0,
+      zoom,
       background: 'var(--bg-panel)',
       borderLeft: '1px solid var(--border)',
       display: 'flex', flexDirection: 'column',
@@ -259,9 +263,9 @@ export default function EventPanel({
           {/* Event list */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
             {filteredEvents.length === 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, padding: '40px 20px' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, padding: '40px 20px', lineHeight: 1.8 }}>
                 No events yet.<br />
-                <span style={{ fontSize: 10 }}>Click + to add one.</span>
+                <span style={{ fontSize: 10 }}>Click + below, or click and drag on the grid.</span>
               </div>
             )}
             {filteredEvents.map(ev => {
@@ -312,6 +316,9 @@ export default function EventPanel({
             >
               + Add event
             </button>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', letterSpacing: '0.03em' }}>
+              or click · drag on the grid
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <button className="btn-ghost" style={{ fontSize: 11 }} onClick={onExport}>↓ Export</button>
               <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => fileInputRef.current?.click()}>↑ Import</button>

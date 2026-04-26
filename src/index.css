@@ -3,7 +3,7 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 :root {
-  --bg-primary: #0a0a12;
+  --bg-primary: #000000;
   --bg-secondary: #10101e;
   --bg-panel: #13131f;
   --bg-hover: #1c1c30;
@@ -15,7 +15,7 @@
   --accent: #d4b896;
   --accent-glow: rgba(212, 184, 150, 0.18);
   --week-past-empty: #242438;
-  --week-future: #12121e;
+  --week-future: #0a0a12;
   --week-today: #48487a;
 }
 
@@ -29,6 +29,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 body {
@@ -43,6 +44,12 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+.mobile-notice { display: none; }
+@media (max-width: 768px) {
+  .mobile-notice { display: flex; }
+  .app-root { display: none; }
+}
 
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }

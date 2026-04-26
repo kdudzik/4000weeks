@@ -26,3 +26,4 @@ dist-ssr
 # Playwright
 .playwright-mcp/
 import.json
+.vercel

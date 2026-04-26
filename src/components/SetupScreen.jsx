@@ -1,8 +1,24 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
-export default function SetupScreen({ onComplete }) {
+export default function SetupScreen({ onComplete, onImport }) {
   const [name, setName] = useState('')
   const [birthday, setBirthday] = useState('')
+  const [importError, setImportError] = useState(null)
+  const fileInputRef = useRef(null)
+
+  function handleImportFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      try {
+        onImport(ev.target.result)
+      } catch {
+        setImportError('Invalid file — please use a 4kw export.')
+      }
+    }
+    reader.readAsText(file)
+  }
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -65,11 +81,10 @@ export default function SetupScreen({ onComplete }) {
           fontSize: 13,
           lineHeight: 1.7,
           marginBottom: 48,
-          maxWidth: 320,
+          maxWidth: 340,
           margin: '0 auto 48px',
         }}>
-          The average human life is about 4,000 weeks.<br />
-          Let's map yours.
+          The average human life is about 4,000 weeks. This app puts all of them on one screen. Add events and life chapters to see your whole story at once — what you've lived, what's happening now, what's still ahead.
         </p>
 
         <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
@@ -103,6 +118,19 @@ export default function SetupScreen({ onComplete }) {
           >
             Begin mapping →
           </button>
+
+          <div style={{ marginTop: 12, textAlign: 'center' }}>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ fontSize: 11, color: 'var(--text-muted)' }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              ↑ Import existing data
+            </button>
+            <input ref={fileInputRef} type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={handleImportFile} />
+            {importError && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 6 }}>{importError}</div>}
+          </div>
         </form>
 
         <p style={{
@@ -110,8 +138,21 @@ export default function SetupScreen({ onComplete }) {
           fontSize: 11,
           marginTop: 24,
           letterSpacing: '0.05em',
+          lineHeight: 1.7,
         }}>
-          All data stored locally in your browser.
+          All data stays in your browser — nothing is sent anywhere.<br />
+          You own it. Export and import anytime.
+        </p>
+
+        <p style={{ color: 'var(--text-muted)', fontSize: 10, marginTop: 32, letterSpacing: '0.05em' }}>
+          developed by{' '}
+          <a href="https://kdg.one" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            KDG
+          </a>
+          {' · inspired by '}
+          <a href="https://www.oliverburkeman.com/fourthousandweeks" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            O. Burkeman
+          </a>
         </p>
       </div>
     </div>

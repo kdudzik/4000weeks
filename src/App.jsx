@@ -46,6 +46,7 @@ function App() {
           setName(n)
           setBirthday(bd)
         }}
+        onImport={importData}
       />
     )
   }
@@ -142,7 +143,6 @@ function App() {
         />
       )}
 
-      <div style={{ zoom: fontSize === 'dense' ? 1 : 1.18, display: 'flex', flexShrink: 0 }}>
       <EventPanel
         events={events}
         categories={categories}
@@ -164,8 +164,8 @@ function App() {
         onReset={reset}
         onExport={exportData}
         onImport={importData}
+        density={fontSize}
       />
-      </div>
     </div>
   )
 }

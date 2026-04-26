@@ -1,12 +1,12 @@
 import { useMemo, useState, useCallback, useRef } from 'react'
-import { format, getYear, parseISO } from 'date-fns'
+import { format, getYear } from 'date-fns'
 import {
   weekIndexToDate,
   enrichEvents,
   getEventsForWeek,
   currentWeekIndex,
   formatWeekRange,
-  TOTAL_ROWS,
+  getTotalRows,
   WEEKS_PER_ROW,
   dateToCalWeekIndex,
   calWeekIndexToDate,
@@ -22,7 +22,8 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
   const LABEL_W = 32
   const HEADER_H = 24
   const AXIS_FONT = density === 'dense' ? 9 : 11
-  const [tooltip, setTooltip] = useState(null)
+  const totalRows = useMemo(() => getTotalRows(birthday), [birthday])
+  const tooltipRef = useRef(null)
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
   const isDragging = dragStart !== null
@@ -34,10 +35,10 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
     [categories]
   )
   const nowIndex = useMemo(() => currentWeekIndex(birthday), [birthday])
-  const totalCells = TOTAL_ROWS * WEEKS_PER_ROW
+  const totalCells = totalRows * WEEKS_PER_ROW
 
   // Calendar mode derived values
-  const birthYear = useMemo(() => getYear(parseISO(birthday)), [birthday])
+  const birthYear = useMemo(() => { const [y] = birthday.split('-'); return Number(y) }, [birthday])
   const nowCalIndex = useMemo(() => dateToCalWeekIndex(birthday, format(new Date(), 'yyyy-MM-dd')), [birthday])
   const birthCalIndex = useMemo(() => dateToCalWeekIndex(birthday, birthday), [birthday])
   const monthCols = useMemo(() => getMonthCols(birthday), [birthday])
@@ -112,48 +113,72 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enriched, calEnriched, categories, totalCells, highlightEventId, filterCatId, filterEventColors, nowIndex, nowCalIndex, birthCalIndex, calendarMode])
 
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+
+  const showTooltip = useCallback((x, y, html) => {
+    const el = tooltipRef.current
+    if (!el) return
+    el.innerHTML = html
+    el.style.display = 'block'
+    el.style.left = Math.min(x + 14, window.innerWidth - 240) + 'px'
+    el.style.top = (y - 10) + 'px'
+  }, [])
+
+  const hideTooltip = useCallback(() => {
+    if (tooltipRef.current) tooltipRef.current.style.display = 'none'
+  }, [])
+
   const handleMouseEnter = useCallback((e, cell) => {
-    const { index, row, isPast, isToday, isPreBirth, cellDate, eventInfos, filteredEventIds } = cell
-    if (isDragging) {
-      setDragEnd(index)
-      return
-    }
-    if (calendarMode) {
-      setTooltip({
-        x: e.clientX, y: e.clientY,
-        label: `${birthYear + row}`,
-        weekStart: cellDate,
-        eventInfos,
-        filteredEventIds,
-        isPreBirth,
-      })
+    const { index, row, isPreBirth, cellDate, eventInfos, filteredEventIds } = cell
+    if (isDragging) { setDragEnd(index); return }
+
+    const label = calendarMode
+      ? esc(birthYear + row)
+      : `Age ${esc(row)} · Week ${esc(index % WEEKS_PER_ROW + 1)}`
+    const weekStart = calendarMode ? cellDate : weekIndexToDate(birthday, index)
+    const range = esc(formatWeekRange(weekStart))
+
+    let html = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">${label}</div>`
+    if (isPreBirth) {
+      html += `<div style="font-size:10px;color:var(--text-muted);font-style:italic">before birth</div>`
     } else {
-      setTooltip({
-        x: e.clientX, y: e.clientY,
-        label: `Age ${row} · Week ${index % WEEKS_PER_ROW + 1}`,
-        weekStart: weekIndexToDate(birthday, index),
-        eventInfos,
-        filteredEventIds,
-        isPreBirth: false,
-      })
+      html += `<div style="font-size:11px;color:var(--text-secondary);margin-bottom:${eventInfos.length ? 8 : 0}px">${range}</div>`
+      const primary = filteredEventIds ? eventInfos.filter(m => filteredEventIds.has(m.event.id)) : eventInfos
+      const context = filteredEventIds ? eventInfos.filter(m => !filteredEventIds.has(m.event.id)) : []
+      for (const { event, category, color } of primary) {
+        html += `<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <div style="width:8px;height:8px;border-radius:2px;background:${esc(color)};flex-shrink:0"></div>
+          <span style="font-size:11px;color:var(--text-primary)">${esc(category?.icon ?? '')} ${esc(event.label)}</span>
+        </div>`
+      }
+      for (const { event, category } of context) {
+        html += `<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <span style="font-size:11px;color:var(--text-secondary)">${esc(category?.icon ?? '')} ${esc(event.label)}</span>
+        </div>`
+      }
     }
-  }, [birthday, calendarMode, birthYear, isDragging])
+    showTooltip(e.clientX, e.clientY, html)
+  }, [birthday, calendarMode, birthYear, isDragging, showTooltip])
 
   const handleMouseMove = useCallback((e) => {
-    if (!isDragging && tooltip) setTooltip(t => t ? { ...t, x: e.clientX, y: e.clientY } : null)
-  }, [isDragging, tooltip])
+    const el = tooltipRef.current
+    if (!isDragging && el?.style.display !== 'none') {
+      el.style.left = Math.min(e.clientX + 14, window.innerWidth - 240) + 'px'
+      el.style.top = (e.clientY - 10) + 'px'
+    }
+  }, [isDragging])
 
   const handleMouseLeave = useCallback(() => {
-    if (!isDragging) setTooltip(null)
-  }, [isDragging])
+    if (!isDragging) hideTooltip()
+  }, [isDragging, hideTooltip])
 
   const handleCellMouseDown = useCallback((e, cell) => {
     if (cell.isPreBirth) return
     e.preventDefault()
-    setTooltip(null)
+    hideTooltip()
     setDragStart(cell.index)
     setDragEnd(cell.index)
-  }, [])
+  }, [hideTooltip])
 
   // Finalize drag on mouseup anywhere on the SVG
   const handleSvgMouseUp = useCallback(() => {
@@ -176,15 +201,15 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
   }, [dragStart, dragEnd, calendarMode, birthday, onCellSelect])
 
   const gridW = WEEKS_PER_ROW * CELL_STEP - CELL_GAP
-  const gridH = TOTAL_ROWS * CELL_STEP - CELL_GAP
+  const gridH = totalRows * CELL_STEP - CELL_GAP
 
   return (
     <div
       ref={containerRef}
-      style={{ flex: 1, overflow: 'auto', background: 'var(--bg-primary)', position: 'relative' }}
+      style={{ flex: 1, overflow: 'auto', position: 'relative', willChange: 'transform' }}
       onMouseMove={handleMouseMove}
     >
-      <div style={{ width: LABEL_W + gridW, padding: '20px 0 24px', margin: '0 auto' }}>
+      <div style={{ width: LABEL_W + gridW, padding: '20px 0 24px', margin: '0 auto', background: 'var(--bg-primary)' }}>
 
         {/* Column header */}
         <div style={{
@@ -220,7 +245,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
           {/* Row labels */}
           <div style={{ width: LABEL_W, flexShrink: 0, position: 'sticky', left: 0, zIndex: 1, background: 'var(--bg-primary)' }}>
-            {Array.from({ length: TOTAL_ROWS }, (_, row) => {
+            {Array.from({ length: totalRows }, (_, row) => {
               const label = calendarMode ? birthYear + row : row
               const show = row % 5 === 0
               return (
@@ -296,59 +321,31 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
             })()}
           </svg>
         </div>
+      {/* Footer */}
+      <div style={{
+        width: LABEL_W + gridW, margin: '16px auto 0',
+        padding: '12px 0 24px',
+        borderTop: '1px solid var(--border-subtle)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        fontSize: AXIS_FONT, color: 'var(--text-muted)', letterSpacing: '0.05em',
+      }}>
+        <span>All data stays in your browser. You own it — export and import anytime.</span>
+        <span style={{ whiteSpace: 'nowrap', marginLeft: 24 }}>
+          <a href="https://kdg.one" target="_blank" rel="noopener noreferrer"
+            style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+            developed by KDG
+          </a>
+          {' · inspired by '}
+          <a href="https://www.oliverburkeman.com/fourthousandweeks" target="_blank" rel="noopener noreferrer"
+            style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+            O. Burkeman
+          </a>
+        </span>
+      </div>
       </div>
 
-      {/* Tooltip */}
-      {tooltip && (
-        <div className="tooltip" style={{
-          left: Math.min(tooltip.x + 14, window.innerWidth - 240),
-          top: tooltip.y - 10,
-          pointerEvents: 'none',
-        }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>
-            {tooltip.label}
-          </div>
-          {tooltip.isPreBirth
-            ? <div style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic' }}>before birth</div>
-            : <>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: tooltip.eventInfos.length ? 8 : 0 }}>
-                {formatWeekRange(tooltip.weekStart)}
-              </div>
-              {tooltip.filteredEventIds
-                ? (() => {
-                    const primary = tooltip.eventInfos.filter(({ event }) => tooltip.filteredEventIds.has(event.id))
-                    const context = tooltip.eventInfos.filter(({ event }) => !tooltip.filteredEventIds.has(event.id))
-                    return <>
-                      {primary.map(({ event, category, color }) => (
-                        <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
-                          <span style={{ fontSize: 11, color: 'var(--text-primary)' }}>
-                            {category?.icon} {event.label}
-                          </span>
-                        </div>
-                      ))}
-                      {context.map(({ event, category }) => (
-                        <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-                            {category?.icon} {event.label}
-                          </span>
-                        </div>
-                      ))}
-                    </>
-                  })()
-                : tooltip.eventInfos.map(({ event, category, color }) => (
-                    <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
-                      <span style={{ fontSize: 11, color: 'var(--text-primary)' }}>
-                        {category?.icon} {event.label}
-                      </span>
-                    </div>
-                  ))
-              }
-            </>
-          }
-        </div>
-      )}
+      {/* Tooltip — always in DOM, shown/hidden imperatively to avoid re-renders */}
+      <div ref={tooltipRef} className="tooltip" style={{ display: 'none', pointerEvents: 'none' }} />
     </div>
   )
 }

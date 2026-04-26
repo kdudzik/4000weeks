@@ -5,7 +5,6 @@ import {
   endOfWeek,
   differenceInCalendarWeeks,
   differenceInCalendarYears,
-  parseISO,
   isAfter,
   isBefore,
   isEqual,
@@ -13,7 +12,18 @@ import {
   getYear,
 } from 'date-fns'
 
-export const TOTAL_ROWS = 80
+/** Parse a YYYY-MM-DD string as local midnight (not UTC). */
+function parseLocal(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+export const MIN_ROWS = 80
+
+export function getTotalRows(birthday) {
+  const ageYears = differenceInCalendarYears(new Date(), parseLocal(birthday))
+  return Math.max(MIN_ROWS, ageYears + 5)
+}
 export const WEEKS_PER_ROW = 52
 
 /**
@@ -24,7 +34,7 @@ export const WEEKS_PER_ROW = 52
 export function weekIndexToDate(birthday, weekIndex) {
   const row = Math.floor(weekIndex / WEEKS_PER_ROW)
   const col = weekIndex % WEEKS_PER_ROW
-  const rowStart = startOfWeek(addYears(parseISO(birthday), row), { weekStartsOn: 1 })
+  const rowStart = startOfWeek(addYears(parseLocal(birthday), row), { weekStartsOn: 1 })
   return addWeeks(rowStart, col)
 }
 
@@ -33,8 +43,8 @@ export function weekIndexToDate(birthday, weekIndex) {
  * Row = age in full years; col = weeks since that birthday's row start.
  */
 export function dateToWeekIndex(birthday, dateStr) {
-  const bd = parseISO(birthday)
-  const date = parseISO(dateStr)
+  const bd = parseLocal(birthday)
+  const date = parseLocal(dateStr)
   const row = Math.max(0, differenceInCalendarYears(date, bd))
   const rowStart = startOfWeek(addYears(bd, row), { weekStartsOn: 1 })
   const col = differenceInCalendarWeeks(
@@ -98,7 +108,7 @@ export function formatWeekRange(weekStart) {
 
 /** Start of week containing Jan 1 of birth year — the calendar grid origin. */
 export function getCalBase(birthday) {
-  const birthYear = getYear(parseISO(birthday))
+  const birthYear = getYear(parseLocal(birthday))
   return startOfWeek(new Date(birthYear, 0, 1), { weekStartsOn: 1 })
 }
 
@@ -107,8 +117,8 @@ export function getCalBase(birthday) {
  *  corresponds to exactly one calendar year, regardless of 52/53-week years.
  */
 export function dateToCalWeekIndex(birthday, dateStr) {
-  const birthYear = getYear(parseISO(birthday))
-  const date = parseISO(dateStr)
+  const birthYear = getYear(parseLocal(birthday))
+  const date = parseLocal(dateStr)
   const year = getYear(date)
   const yearBase = startOfWeek(new Date(year, 0, 1), { weekStartsOn: 1 })
   const weekInYear = differenceInCalendarWeeks(
@@ -121,7 +131,7 @@ export function dateToCalWeekIndex(birthday, dateStr) {
 
 /** Date for a given calendar grid index. */
 export function calWeekIndexToDate(birthday, calIndex) {
-  const birthYear = getYear(parseISO(birthday))
+  const birthYear = getYear(parseLocal(birthday))
   const year = birthYear + Math.floor(calIndex / 52)
   const week = calIndex % 52
   const yearBase = startOfWeek(new Date(year, 0, 1), { weekStartsOn: 1 })
@@ -130,7 +140,7 @@ export function calWeekIndexToDate(birthday, calIndex) {
 
 /** Column positions (0-based) for each month in the birth year. */
 export function getMonthCols(birthday) {
-  const birthYear = getYear(parseISO(birthday))
+  const birthYear = getYear(parseLocal(birthday))
   const yearBase = startOfWeek(new Date(birthYear, 0, 1), { weekStartsOn: 1 })
   return Array.from({ length: 12 }, (_, m) => {
     const monthStart = startOfWeek(new Date(birthYear, m, 1), { weekStartsOn: 1 })
