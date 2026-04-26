@@ -146,7 +146,7 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent, d
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: mode === 'range' ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: mode === 'single' ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div>
               <label>{mode === 'single' ? 'Date' : 'Start date'}</label>
               <input
@@ -168,10 +168,11 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent, d
               </div>
             )}
             {mode === 'ongoing' && (
-              <div style={{ display: 'flex', alignItems: 'center', paddingTop: 22 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                  extends to today
-                </span>
+              <div>
+                <label>End date</label>
+                <div style={{ display: 'flex', alignItems: 'center', height: 36, paddingLeft: 10, fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  ongoing
+                </div>
               </div>
             )}
           </div>

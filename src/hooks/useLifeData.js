@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const DEFAULT_CATEGORIES = [
-  { id: 'home',         label: 'Home',          color: '#6ee7b7', icon: '🏠' },
-  { id: 'school',       label: 'School',        color: '#93c5fd', icon: '📚' },
-  { id: 'university',   label: 'University',    color: '#60a5fa', icon: '🎓' },
+  { id: 'home',         label: 'Home',          color: '#34d399', icon: '🏠' },
+  { id: 'school',       label: 'School',        color: '#60a5fa', icon: '📚' },
+  { id: 'university',   label: 'University',    color: '#818cf8', icon: '🎓' },
   { id: 'job',          label: 'Job',           color: '#fbbf24', icon: '💼' },
-  { id: 'relationship', label: 'Relationship',  color: '#f9a8d4', icon: '❤️' },
+  { id: 'relationship', label: 'Relationship',  color: '#f472b6', icon: '❤️' },
   { id: 'travel',       label: 'Travel',        color: '#a78bfa', icon: '✈️' },
   { id: 'health',       label: 'Health',        color: '#fb923c', icon: '🏥' },
-  { id: 'birth',        label: 'Birth',         color: '#34d399', icon: '🌱' },
-  { id: 'death',        label: 'Death',         color: '#9ca3af', icon: '🕯️' },
+  { id: 'birth',        label: 'Birth',         color: '#a3e635', icon: '🌱' },
+  { id: 'death',        label: 'Death',         color: '#94a3b8', icon: '🕯️' },
+  { id: 'pets',         label: 'Pet',           color: '#22d3ee', icon: '🐾' },
   { id: 'other',        label: 'Other',         color: '#e879f9', icon: '💠'  },
 ]
 
