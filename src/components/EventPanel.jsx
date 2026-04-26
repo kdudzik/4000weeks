@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import AddEventModal from './AddEventModal'
 import CategoryModal from './CategoryModal'
-import { formatEventDuration } from '../utils/dateUtils'
+import { formatEventAge, formatEventDuration } from '../utils/dateUtils'
 
 export default function EventPanel({
   events, categories,
@@ -294,7 +294,7 @@ export default function EventPanel({
                       {ev.label}
                     </div>
                     <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-                      {!filterCatId && <span title={cat?.label} style={{ cursor: 'default' }}>{cat?.icon}</span>}{!filterCatId && ' · '}{formatEventDuration(ev.startDate, ev.endDate, ev.ongoing, birthday)} · {ev.startDate}{ev.ongoing ? ' → now' : ev.endDate ? ` → ${ev.endDate}` : ''}
+                      {!filterCatId && <span title={cat?.label} style={{ cursor: 'default' }}>{cat?.icon}</span>}{!filterCatId && ' · '}{[formatEventAge(ev.startDate, ev.endDate, ev.ongoing, birthday), formatEventDuration(ev.startDate, ev.endDate, ev.ongoing)].filter(Boolean).join(' · ')} · {ev.startDate}{ev.ongoing ? ' → now' : ev.endDate ? ` → ${ev.endDate}` : ''}
                     </div>
                     {ev.note && (
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

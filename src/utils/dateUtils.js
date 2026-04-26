@@ -116,22 +116,21 @@ function ageAt(date, birthdayStr) {
   return months < 25 ? Math.round(months / 12 * 10) / 10 : Math.floor(months / 12)
 }
 
-/**
- * Human-readable label for an event's time.
- * With birthday: "age X" for single, "age X–Y" for range/ongoing.
- * Without birthday: duration like "14 weeks", "8 months", "3.2 yrs".
- */
-export function formatEventDuration(startDate, endDate, ongoing, birthday) {
+/** "age X", "age X–Y", or "age X–" (ongoing). Null if no birthday. */
+export function formatEventAge(startDate, endDate, ongoing, birthday) {
+  if (!birthday) return null
   const start = parseLocal(startDate)
-  if (birthday) {
-    const startAge = ageAt(start, birthday)
-    if (!endDate && !ongoing) return `age ${startAge}`
-    const end = ongoing ? new Date() : parseLocal(endDate)
-    const endAge = ageAt(end, birthday)
-    if (ongoing) return `age ${startAge}–`
-    return startAge === endAge ? `age ${startAge}` : `age ${startAge}–${endAge}`
-  }
-  if (!endDate && !ongoing) return '1 week'
+  const startAge = ageAt(start, birthday)
+  if (!endDate && !ongoing) return `age ${startAge}`
+  if (ongoing) return `age ${startAge}–`
+  const endAge = ageAt(parseLocal(endDate), birthday)
+  return startAge === endAge ? `age ${startAge}` : `age ${startAge}–${endAge}`
+}
+
+/** "14 weeks", "8 months", "3.2 yrs". Single events return null. */
+export function formatEventDuration(startDate, endDate, ongoing) {
+  if (!endDate && !ongoing) return null
+  const start = parseLocal(startDate)
   const end = ongoing ? new Date() : parseLocal(endDate)
   const weeks = Math.max(1, Math.abs(differenceInWeeks(end, start)))
   if (weeks < 9) return `${weeks} week${weeks === 1 ? '' : 's'}`
