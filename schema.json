@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://4000weeks/export-schema.json",
+  "title": "4000 Weeks Export",
+  "description": "Export format for the 4000 Weeks life visualization app",
+  "type": "object",
+  "required": ["version", "birthday", "categories", "events"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Schema version"
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the export was created"
+    },
+    "birthday": {
+      "type": "string",
+      "format": "date",
+      "description": "User's date of birth in YYYY-MM-DD format",
+      "examples": ["1990-06-15"]
+    },
+    "name": {
+      "type": "string",
+      "description": "User's display name (optional)",
+      "examples": ["Ada"]
+    },
+    "categories": {
+      "type": "array",
+      "description": "Life event categories, including built-in presets and user-defined ones",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "color"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier. Built-in preset IDs: kindergarten, school, university, job, relationship, travel, home, birth, death, health, other"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "examples": ["University", "Travel", "Relationship"]
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "Hex color used for weeks in this category",
+            "examples": ["#86efac", "#60a5fa", "#f472b6"]
+          },
+          "icon": {
+            "type": ["string", "null"],
+            "description": "Emoji or short string displayed next to the category label",
+            "examples": ["🎓", "✈️", "❤️"]
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "description": "Life events and periods to display on the grid",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "categoryId", "startDate"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier (UUID)"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable name for this event",
+            "examples": ["University of Warsaw", "Backpacking Southeast Asia"]
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "References a category id in the categories array"
+          },
+          "color": {
+            "type": ["string", "null"],
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "Per-event color override. null means use the category color"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Start date in YYYY-MM-DD format. For point events this is the only date.",
+            "examples": ["2008-10-01"]
+          },
+          "endDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "End date in YYYY-MM-DD format. null means a single-week (point) event.",
+            "examples": ["2013-06-30"]
+          },
+          "note": {
+            "type": ["string", "null"],
+            "description": "Optional free-text note attached to the event"
+          }
+        }
+      }
+    }
+  }
+}
