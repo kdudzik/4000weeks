@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-export default function SetupScreen({ onComplete, onImport }) {
+export default function SetupScreen({ onComplete, onImport, onDemo }) {
   const [name, setName] = useState('')
   const [birthday, setBirthday] = useState('')
   const [importError, setImportError] = useState(null)
@@ -119,11 +119,19 @@ export default function SetupScreen({ onComplete, onImport }) {
             Begin mapping →
           </button>
 
-          <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <div style={{ marginTop: 12, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button
               type="button"
               className="btn-ghost"
-              style={{ fontSize: 11, color: 'var(--text-muted)' }}
+              style={{ fontSize: 11, width: '100%' }}
+              onClick={onDemo}
+            >
+              ✦ Try with demo data
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ fontSize: 11, color: 'var(--text-muted)', width: '100%' }}
               onClick={() => fileInputRef.current?.click()}
             >
               ↑ Import existing data

@@ -5,6 +5,7 @@ import WeekGrid from './components/WeekGrid'
 import EventPanel from './components/EventPanel'
 import AddEventModal from './components/AddEventModal'
 import { enrichEvents, currentWeekIndex } from './utils/dateUtils'
+import { DEMO_DATA } from './data/demoData'
 
 function App() {
   const {
@@ -39,6 +40,8 @@ function App() {
     localStorage.setItem('4kw_font_size', size)
   }
 
+  const [isDemo, setIsDemo] = useState(() => localStorage.getItem('4kw_is_demo') === '1')
+
   const [highlightEventId, setHighlightEventId] = useState(null)
   const [filterCatId, setFilterCatId] = useState(null)
   const [calendarMode, setCalendarMode] = useState(false)
@@ -64,12 +67,43 @@ function App() {
           setBirthday(bd)
         }}
         onImport={importData}
+        onDemo={() => { importData(JSON.stringify(DEMO_DATA)); setIsDemo(true); localStorage.setItem('4kw_is_demo', '1') }}
       />
     )
   }
 
+  const handleClearDemo = () => {
+    reset()
+    setIsDemo(false)
+    localStorage.removeItem('4kw_is_demo')
+  }
+
   return (
-    <div style={{ height: '100%', display: 'flex', overflow: 'hidden' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Demo banner */}
+      {isDemo && (
+        <div style={{
+          background: 'var(--accent)', color: 'var(--accent-text)',
+          padding: '7px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+          fontSize: 11, letterSpacing: '0.04em', flexShrink: 0,
+        }}>
+          <span>You're viewing demo data — Alex Rivera, 37.</span>
+          <button
+            onClick={handleClearDemo}
+            style={{
+              background: 'var(--accent-text)', color: 'var(--accent)',
+              border: 'none', borderRadius: 4,
+              padding: '3px 10px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
+              cursor: 'pointer', fontWeight: 500, letterSpacing: '0.04em',
+            }}
+          >
+            Start with my own data →
+          </button>
+        </div>
+      )}
+      {/* Main layout */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
       {/* Grid area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Top bar */}
@@ -213,6 +247,7 @@ function App() {
         onImport={importData}
         density={fontSize}
       />
+      </div>
     </div>
   )
 }
