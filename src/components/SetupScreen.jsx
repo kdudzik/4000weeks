@@ -157,6 +157,10 @@ export default function SetupScreen({ onComplete, onImport, onDemo }) {
           <a href="https://kdg.one" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
             KDG
           </a>
+          {' · '}
+          <a href="https://github.com/kdudzik/4000weeks" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            GitHub
+          </a>
           {' · inspired by '}
           <a href="https://www.oliverburkeman.com/fourthousandweeks" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
             O. Burkeman

@@ -335,6 +335,11 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
             style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
             developed by KDG
           </a>
+          {' · '}
+          <a href="https://github.com/kdudzik/4000weeks" target="_blank" rel="noopener noreferrer"
+            style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+            GitHub
+          </a>
           {' · inspired by '}
           <a href="https://www.oliverburkeman.com/fourthousandweeks" target="_blank" rel="noopener noreferrer"
             style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>

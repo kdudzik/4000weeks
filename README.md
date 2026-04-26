@@ -12,10 +12,14 @@ A personal life visualization tool based on the concept that the average human l
 - Hover any week for a tooltip showing the date range and which events fall in it
 - Hover an event in the sidebar to highlight its weeks on the grid; click a category to filter and rainbow-color its events
 - **Click a week** to quickly add a single-week event; **drag across weeks** to add a date-range event — the modal opens pre-filled with the selected dates (and pre-selected category when filtering)
-- 10 built-in categories (Home, School, University, Job, Relationship, Travel, Health, Birth, Death, Other) — all renameable, recolorable, deletable; add your own
+- 11 built-in categories (Home, School, University, Job, Relationship, Travel, Health, Pet, Birth, Death, Other) — all renameable, recolorable, deletable; add your own
 - Export to JSON and import back — all categories (including defaults) are included
 
-## Setup
+## Try it
+
+**[4kw.vercel.app](https://4kw.vercel.app)** — no install needed, runs in your browser.
+
+Self-hosting is also an option:
 
 ```bash
 pnpm install

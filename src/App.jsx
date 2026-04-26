@@ -59,23 +59,31 @@ function App() {
     }))
   }, [filterCatId, events, birthday])
 
+  const handleClearDemo = () => {
+    reset()
+    setIsDemo(false)
+    localStorage.removeItem('4kw_is_demo')
+  }
+
+  const handleImport = (json) => {
+    importData(json)
+    setIsDemo(false)
+    localStorage.removeItem('4kw_is_demo')
+  }
+
   if (!birthday) {
     return (
       <SetupScreen
         onComplete={(n, bd) => {
           setName(n)
           setBirthday(bd)
+          setIsDemo(false)
+          localStorage.removeItem('4kw_is_demo')
         }}
-        onImport={importData}
+        onImport={handleImport}
         onDemo={() => { importData(JSON.stringify(DEMO_DATA)); setIsDemo(true); localStorage.setItem('4kw_is_demo', '1') }}
       />
     )
-  }
-
-  const handleClearDemo = () => {
-    reset()
-    setIsDemo(false)
-    localStorage.removeItem('4kw_is_demo')
   }
 
   return (
@@ -242,9 +250,9 @@ function App() {
         name={name}
         onUpdateBirthday={setBirthday}
         onUpdateName={setName}
-        onReset={reset}
+        onReset={handleClearDemo}
         onExport={exportData}
-        onImport={importData}
+        onImport={handleImport}
         density={fontSize}
       />
       </div>
