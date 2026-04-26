@@ -14,7 +14,10 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent })
   const [startDate, setStartDate] = useState(initial.startDate || '')
   const [endDate, setEndDate] = useState(initial.endDate || '')
   const [note, setNote] = useState(initial.note || '')
-  const [isRange, setIsRange] = useState(!!initial.endDate)
+  // 'single' | 'range' | 'ongoing'
+  const [mode, setMode] = useState(
+    initial.ongoing ? 'ongoing' : initial.endDate ? 'range' : 'single'
+  )
 
   const selectedCat = categories.find(c => c.id === categoryId)
   const displayColor = color || selectedCat?.color || '#888'
@@ -27,7 +30,8 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent })
       categoryId,
       color: color,
       startDate,
-      endDate: isRange ? endDate || null : null,
+      endDate: mode === 'range' ? endDate || null : null,
+      ongoing: mode === 'ongoing',
       note: note.trim() || null,
     })
     onClose()
@@ -109,45 +113,36 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent })
             <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 14, height: 14, borderRadius: 3, background: displayColor }} />
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                {color ? 'custom color' : `using ${selectedCat?.label || 'category'} color`}
+                {color ? 'custom color' : 'default color'}
               </span>
             </div>
           </div>
 
           {/* Date(s) */}
           <div style={{ marginBottom: 12 }}>
-            <label>Date range or single week?</label>
+            <label>Duration</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
-                onClick={() => setIsRange(false)}
-                style={{
-                  flex: 1, padding: '7px 12px', borderRadius: 6, fontSize: 12,
-                  background: !isRange ? 'var(--bg-hover)' : 'transparent',
-                  border: `1px solid ${!isRange ? 'var(--accent)' : 'var(--border)'}`,
-                  color: !isRange ? 'var(--accent)' : 'var(--text-secondary)',
-                }}
-              >
-                Single week
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsRange(true)}
-                style={{
-                  flex: 1, padding: '7px 12px', borderRadius: 6, fontSize: 12,
-                  background: isRange ? 'var(--bg-hover)' : 'transparent',
-                  border: `1px solid ${isRange ? 'var(--accent)' : 'var(--border)'}`,
-                  color: isRange ? 'var(--accent)' : 'var(--text-secondary)',
-                }}
-              >
-                Date range
-              </button>
+              {[['single', 'Single week'], ['range', 'Date range'], ['ongoing', 'Ongoing']].map(([val, lbl]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setMode(val)}
+                  style={{
+                    flex: 1, padding: '7px 12px', borderRadius: 6, fontSize: 12,
+                    background: mode === val ? 'var(--bg-hover)' : 'transparent',
+                    border: `1px solid ${mode === val ? 'var(--accent)' : 'var(--border)'}`,
+                    color: mode === val ? 'var(--accent)' : 'var(--text-secondary)',
+                  }}
+                >
+                  {lbl}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: isRange ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: mode === 'range' ? '1fr 1fr' : '1fr', gap: 12, marginBottom: 16 }}>
             <div>
-              <label>{isRange ? 'Start date' : 'Date'}</label>
+              <label>{mode === 'single' ? 'Date' : 'Start date'}</label>
               <input
                 type="date"
                 value={startDate}
@@ -155,7 +150,7 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent })
                 required
               />
             </div>
-            {isRange && (
+            {mode === 'range' && (
               <div>
                 <label>End date</label>
                 <input
@@ -164,6 +159,13 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent })
                   min={startDate}
                   onChange={e => setEndDate(e.target.value)}
                 />
+              </div>
+            )}
+            {mode === 'ongoing' && (
+              <div style={{ display: 'flex', alignItems: 'center', paddingTop: 22 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  extends to today
+                </span>
               </div>
             )}
           </div>

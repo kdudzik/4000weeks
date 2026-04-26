@@ -7,6 +7,7 @@ export default function EventPanel({
   onAddEvent, onUpdateEvent, onDeleteEvent,
   onAddCategory, onUpdateCategory, onDeleteCategory,
   onHighlight, highlightEventId,
+  filterCatId, onFilterCat, filterEventColors,
   birthday, name,
   onReset, onExport, onImport,
 }) {
@@ -17,16 +18,16 @@ export default function EventPanel({
   const [editingEvent, setEditingEvent] = useState(null)
   const [showCatModal, setShowCatModal] = useState(false)
   const [editingCat, setEditingCat] = useState(null)
-  const [filterCat, setFilterCat] = useState(null)
+
   const [collapsed, setCollapsed] = useState(false)
 
   const catMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c])), [categories])
 
   const filteredEvents = useMemo(() => {
     let evs = [...events]
-    if (filterCat) evs = evs.filter(e => e.categoryId === filterCat)
+    if (filterCatId) evs = evs.filter(e => e.categoryId === filterCatId)
     return evs.sort((a, b) => a.startDate.localeCompare(b.startDate))
-  }, [events, filterCat])
+  }, [events, filterCatId])
 
   function handleImportFile(e) {
     const file = e.target.files?.[0]
@@ -81,7 +82,7 @@ export default function EventPanel({
 
   return (
     <div style={{
-      width: 300, flexShrink: 0,
+      width: 375, flexShrink: 0,
       background: 'var(--bg-panel)',
       borderLeft: '1px solid var(--border)',
       display: 'flex', flexDirection: 'column',
@@ -138,11 +139,11 @@ export default function EventPanel({
           {/* Filter by category */}
           <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             <button
-              onClick={() => setFilterCat(null)}
+              onClick={() => onFilterCat(null)}
               style={{
                 fontSize: 10, padding: '3px 8px', borderRadius: 4,
-                background: !filterCat ? 'var(--accent)' : 'var(--bg-secondary)',
-                color: !filterCat ? '#1a1210' : 'var(--text-secondary)',
+                background: !filterCatId ? 'var(--accent)' : 'var(--bg-secondary)',
+                color: !filterCatId ? '#1a1210' : 'var(--text-secondary)',
                 border: 'none', cursor: 'pointer',
                 letterSpacing: '0.05em',
               }}
@@ -152,18 +153,18 @@ export default function EventPanel({
             {categories.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setFilterCat(filterCat === cat.id ? null : cat.id)}
+                onClick={() => onFilterCat(filterCatId === cat.id ? null : cat.id)}
                 style={{
                   fontSize: 10, padding: '3px 8px', borderRadius: 4,
-                  background: filterCat === cat.id ? cat.color : 'var(--bg-secondary)',
-                  color: filterCat === cat.id ? '#1a1210' : 'var(--text-secondary)',
-                  border: `1px solid ${filterCat === cat.id ? 'transparent' : 'var(--border)'}`,
+                  background: filterCatId === cat.id ? cat.color : 'var(--bg-secondary)',
+                  color: filterCatId === cat.id ? '#1a1210' : 'var(--text-secondary)',
+                  border: `1px solid ${filterCatId === cat.id ? 'transparent' : 'var(--border)'}`,
                   opacity: events.some(e => e.categoryId === cat.id) ? 1 : 0.35,
                   cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}
               >
-                <span style={{ width: 6, height: 6, borderRadius: 2, background: filterCat === cat.id ? '#1a1210' : cat.color, flexShrink: 0, display: 'inline-block' }} />
+                <span style={{ width: 6, height: 6, borderRadius: 2, background: filterCatId === cat.id ? '#1a1210' : cat.color, flexShrink: 0, display: 'inline-block' }} />
                 {cat.label}
               </button>
             ))}
@@ -179,7 +180,7 @@ export default function EventPanel({
             )}
             {filteredEvents.map(ev => {
               const cat = catMap[ev.categoryId]
-              const color = ev.color || cat?.color || '#888'
+              const color = (filterEventColors && !ev.color && filterEventColors[ev.id]) || ev.color || cat?.color || '#888'
               const isHighlighted = highlightEventId === ev.id
               return (
                 <div
@@ -201,7 +202,7 @@ export default function EventPanel({
                       {ev.label}
                     </div>
                     <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
-                      {cat?.icon} {cat?.label} · {ev.startDate}{ev.endDate ? ` → ${ev.endDate}` : ''}
+                      {cat?.icon} {cat?.label} · {ev.startDate}{ev.ongoing ? ' → now' : ev.endDate ? ` → ${ev.endDate}` : ''}
                     </div>
                     {ev.note && (
                       <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

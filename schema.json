@@ -98,6 +98,10 @@
             "description": "End date in YYYY-MM-DD format. null means a single-week (point) event.",
             "examples": ["2013-06-30"]
           },
+          "ongoing": {
+            "type": "boolean",
+            "description": "If true, the event has no end date and extends to the current week on the grid"
+          },
           "note": {
             "type": ["string", "null"],
             "description": "Optional free-text note attached to the event"

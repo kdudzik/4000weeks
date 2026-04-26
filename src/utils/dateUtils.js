@@ -8,6 +8,7 @@ import {
   isBefore,
   isEqual,
   format,
+  getYear,
 } from 'date-fns'
 
 export const TOTAL_ROWS = 80
@@ -34,13 +35,13 @@ export function dateToWeekIndex(birthday, dateStr) {
  * Returns which events (color) cover a given week index.
  * Returns array of { event, category } matching events.
  */
-export function getEventsForWeek(weekIndex, events, categories) {
+export function getEventsForWeek(weekIndex, events, categories, nowIndex) {
   const catMap = Object.fromEntries(categories.map(c => [c.id, c]))
   return events.filter(ev => {
     if (!ev.startDate) return false
-    // We store startDate as YYYY-MM-DD — just compare by week range
     const start = ev._startWeek
-    const end = ev._endWeek ?? ev._startWeek
+    // null _endWeek = ongoing: extends to current week
+    const end = ev._endWeek ?? nowIndex ?? ev._startWeek
     return weekIndex >= start && weekIndex <= end
   }).map(ev => ({
     event: ev,
@@ -56,7 +57,11 @@ export function enrichEvents(events, birthday) {
   return events.map(ev => ({
     ...ev,
     _startWeek: dateToWeekIndex(birthday, ev.startDate),
-    _endWeek: ev.endDate ? dateToWeekIndex(birthday, ev.endDate) : dateToWeekIndex(birthday, ev.startDate),
+    _endWeek: ev.endDate
+      ? dateToWeekIndex(birthday, ev.endDate)
+      : ev.ongoing
+        ? null  // resolved to nowIndex at render time
+        : dateToWeekIndex(birthday, ev.startDate),
   }))
 }
 
@@ -73,6 +78,36 @@ export function currentWeekIndex(birthday) {
 export function formatWeekRange(weekStart) {
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
   return `${format(weekStart, 'dd MMM yyyy')} – ${format(weekEnd, 'dd MMM yyyy')}`
+}
+
+// ── Calendar mode utilities ──────────────────────────────────────────────────
+
+/** Start of week containing Jan 1 of birth year — the calendar grid origin. */
+export function getCalBase(birthday) {
+  const birthYear = getYear(parseISO(birthday))
+  return startOfWeek(new Date(birthYear, 0, 1), { weekStartsOn: 1 })
+}
+
+/** Weeks from calendar base to a date string. */
+export function dateToCalWeekIndex(birthday, dateStr) {
+  const base = getCalBase(birthday)
+  const target = startOfWeek(parseISO(dateStr), { weekStartsOn: 1 })
+  return differenceInCalendarWeeks(target, base, { weekStartsOn: 1 })
+}
+
+/** Date for a given calendar grid index. */
+export function calWeekIndexToDate(birthday, calIndex) {
+  return addWeeks(getCalBase(birthday), calIndex)
+}
+
+/** Column positions (0-based) for each month in the birth year. */
+export function getMonthCols(birthday) {
+  const base = getCalBase(birthday)
+  const birthYear = getYear(parseISO(birthday))
+  return Array.from({ length: 12 }, (_, m) => {
+    const monthStart = startOfWeek(new Date(birthYear, m, 1), { weekStartsOn: 1 })
+    return differenceInCalendarWeeks(monthStart, base, { weekStartsOn: 1 })
+  })
 }
 
 /**

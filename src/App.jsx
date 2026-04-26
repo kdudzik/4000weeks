@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useLifeData } from './hooks/useLifeData'
 import SetupScreen from './components/SetupScreen'
 import WeekGrid from './components/WeekGrid'
 import EventPanel from './components/EventPanel'
+import { enrichEvents, currentWeekIndex } from './utils/dateUtils'
 
 function App() {
   const {
@@ -14,6 +15,20 @@ function App() {
   } = useLifeData()
 
   const [highlightEventId, setHighlightEventId] = useState(null)
+  const [filterCatId, setFilterCatId] = useState(null)
+  const [calendarMode, setCalendarMode] = useState(false)
+
+  const filterEventColors = useMemo(() => {
+    if (!filterCatId || !birthday) return null
+    const enriched = enrichEvents(events, birthday)
+    const nowIndex = currentWeekIndex(birthday)
+    const inCat = enriched.filter(e => e.categoryId === filterCatId)
+    const n = inCat.length
+    return Object.fromEntries(inCat.map((e, i) => {
+      const hue = Math.round((i * 360 / Math.max(n, 1) + 15) % 360)
+      return [e.id, `hsl(${hue}, 65%, 58%)`]
+    }))
+  }, [filterCatId, events, birthday])
 
   if (!birthday) {
     return (
@@ -45,6 +60,23 @@ function App() {
             YOUR LIFE IN WEEKS
           </span>
           <div style={{ flex: 1 }} />
+          {/* View toggle */}
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: 6, padding: 2, gap: 2 }}>
+            {[['life', false], ['calendar', true]].map(([lbl, val]) => (
+              <button
+                key={lbl}
+                onClick={() => setCalendarMode(val)}
+                style={{
+                  fontSize: 10, padding: '3px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
+                  background: calendarMode === val ? 'var(--bg-hover)' : 'transparent',
+                  color: calendarMode === val ? 'var(--text-primary)' : 'var(--text-muted)',
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
           {/* Legend inline */}
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--week-past-empty)' }} />
@@ -61,6 +93,9 @@ function App() {
           events={events}
           categories={categories}
           highlightEventId={highlightEventId}
+          filterCatId={filterCatId}
+          filterEventColors={filterEventColors}
+          calendarMode={calendarMode}
         />
       </div>
 
@@ -74,6 +109,9 @@ function App() {
         onUpdateCategory={updateCategory}
         onDeleteCategory={deleteCategory}
         onHighlight={setHighlightEventId}
+        filterCatId={filterCatId}
+        onFilterCat={setFilterCatId}
+        filterEventColors={filterEventColors}
         highlightEventId={highlightEventId}
         birthday={birthday}
         name={name}
