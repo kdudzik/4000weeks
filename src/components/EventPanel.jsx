@@ -36,11 +36,22 @@ export default function EventPanel({
 
   const catMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c])), [categories])
 
+  const [sortOrder, setSortOrder] = useState(() => localStorage.getItem('4kw_sort_order') || 'asc')
+
+  const toggleSortOrder = () => {
+    const next = sortOrder === 'asc' ? 'desc' : 'asc'
+    setSortOrder(next)
+    localStorage.setItem('4kw_sort_order', next)
+  }
+
   const filteredEvents = useMemo(() => {
     let evs = [...events]
     if (filterCatId) evs = evs.filter(e => e.categoryId === filterCatId)
-    return evs.sort((a, b) => a.startDate.localeCompare(b.startDate))
-  }, [events, filterCatId])
+    return evs.sort((a, b) => sortOrder === 'asc'
+      ? a.startDate.localeCompare(b.startDate)
+      : b.startDate.localeCompare(a.startDate)
+    )
+  }, [events, filterCatId, sortOrder])
 
   function handleImportFile(e) {
     const file = e.target.files?.[0]
@@ -229,6 +240,20 @@ export default function EventPanel({
                 {cat.label}
               </button>
             ))}
+          </div>
+
+          {/* Sort toggle */}
+          <div style={{ padding: '4px 12px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={toggleSortOrder}
+              style={{
+                fontSize: 10, padding: '2px 8px', borderRadius: 4, border: 'none', cursor: 'pointer',
+                background: 'transparent', color: 'var(--text-muted)',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {sortOrder === 'asc' ? '↑ oldest first' : '↓ newest first'}
+            </button>
           </div>
 
           {/* Event list */}

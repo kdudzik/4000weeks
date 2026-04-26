@@ -15,6 +15,13 @@ function App() {
     reset, exportData, importData,
   } = useLifeData()
 
+  const [fontSize, setFontSize] = useState(() => localStorage.getItem('4kw_font_size') || 'dense')
+
+  const toggleFontSize = (size) => {
+    setFontSize(size)
+    localStorage.setItem('4kw_font_size', size)
+  }
+
   const [highlightEventId, setHighlightEventId] = useState(null)
   const [filterCatId, setFilterCatId] = useState(null)
   const [calendarMode, setCalendarMode] = useState(false)
@@ -54,6 +61,7 @@ function App() {
           display: 'flex', alignItems: 'center', gap: 16,
           background: 'var(--bg-primary)',
           flexShrink: 0,
+          zoom: fontSize === 'dense' ? 1 : 1.18,
         }}>
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 19, fontWeight: 600, fontStyle: 'italic', color: 'var(--accent)', letterSpacing: '-0.5px' }}>
             4,000 Weeks
@@ -62,6 +70,26 @@ function App() {
             YOUR LIFE IN WEEKS
           </span>
           <div style={{ flex: 1 }} />
+          {/* Font size toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {[['dense', 10], ['comfortable', 16]].map(([size, px]) => (
+              <button
+                key={size}
+                onClick={() => toggleFontSize(size)}
+                title={size}
+                style={{
+                  fontSize: px, padding: '2px 6px', border: 'none', cursor: 'pointer',
+                  borderRadius: 4,
+                  background: fontSize === size ? 'var(--bg-hover)' : 'transparent',
+                  color: fontSize === size ? 'var(--text-primary)' : 'var(--text-muted)',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 600, lineHeight: 1,
+                }}
+              >
+                A
+              </button>
+            ))}
+          </div>
           {/* View toggle */}
           <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: 6, padding: 2, gap: 2 }}>
             {[['life', false], ['calendar', true]].map(([lbl, val]) => (
@@ -99,6 +127,7 @@ function App() {
           filterEventColors={filterEventColors}
           calendarMode={calendarMode}
           onCellSelect={(startDate, endDate) => setQuickAddDefaults({ startDate, endDate })}
+          density={fontSize}
         />
       </div>
 
@@ -113,6 +142,7 @@ function App() {
         />
       )}
 
+      <div style={{ zoom: fontSize === 'dense' ? 1 : 1.18, display: 'flex', flexShrink: 0 }}>
       <EventPanel
         events={events}
         categories={categories}
@@ -135,6 +165,7 @@ function App() {
         onExport={exportData}
         onImport={importData}
       />
+      </div>
     </div>
   )
 }

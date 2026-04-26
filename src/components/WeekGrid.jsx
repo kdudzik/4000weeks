@@ -13,15 +13,15 @@ import {
   getMonthCols,
 } from '../utils/dateUtils'
 
-const CELL_SIZE = 10
-const CELL_GAP = 2
-const CELL_STEP = CELL_SIZE + CELL_GAP
-const LABEL_W = 32
-const HEADER_H = 24
-
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-export default function WeekGrid({ birthday, events, categories, highlightEventId, filterCatId, filterEventColors, calendarMode, onCellSelect }) {
+export default function WeekGrid({ birthday, events, categories, highlightEventId, filterCatId, filterEventColors, calendarMode, onCellSelect, density = 'dense' }) {
+  const CELL_SIZE = density === 'dense' ? 10 : 13
+  const CELL_GAP = density === 'dense' ? 2 : 3
+  const CELL_STEP = CELL_SIZE + CELL_GAP
+  const LABEL_W = 32
+  const HEADER_H = 24
+  const AXIS_FONT = density === 'dense' ? 9 : 11
   const [tooltip, setTooltip] = useState(null)
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
@@ -198,7 +198,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
                 position: 'absolute',
                 left: LABEL_W + col * CELL_STEP,
                 bottom: 0,
-                fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap',
+                fontSize: AXIS_FONT, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap',
               }}>
                 {MONTH_NAMES[m]}
               </div>
@@ -208,7 +208,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
                 position: 'absolute',
                 left: LABEL_W + week * CELL_STEP,
                 bottom: 0,
-                fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap',
+                fontSize: AXIS_FONT, color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap',
               }}>
                 week {week}
               </div>
@@ -227,7 +227,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
                 <div key={row} style={{
                   height: CELL_STEP,
                   display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-                  paddingRight: 8, fontSize: 9, letterSpacing: '0.05em',
+                  paddingRight: 8, fontSize: AXIS_FONT, letterSpacing: '0.05em',
                   color: show ? 'var(--text-muted)' : 'transparent',
                 }}>
                   {label}

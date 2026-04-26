@@ -1,8 +1,10 @@
 import {
   addWeeks,
+  addYears,
   startOfWeek,
   endOfWeek,
   differenceInCalendarWeeks,
+  differenceInCalendarYears,
   parseISO,
   isAfter,
   isBefore,
@@ -15,20 +17,32 @@ export const TOTAL_ROWS = 80
 export const WEEKS_PER_ROW = 52
 
 /**
- * Returns the start-of-week date for week #weekIndex (0-based) from birthday.
+ * Returns the start-of-week date for week #weekIndex (0-based).
+ * Each row is anchored to the actual Nth birthday so rows stay aligned
+ * with birthdays regardless of leap-year drift.
  */
 export function weekIndexToDate(birthday, weekIndex) {
-  const base = startOfWeek(parseISO(birthday), { weekStartsOn: 1 })
-  return addWeeks(base, weekIndex)
+  const row = Math.floor(weekIndex / WEEKS_PER_ROW)
+  const col = weekIndex % WEEKS_PER_ROW
+  const rowStart = startOfWeek(addYears(parseISO(birthday), row), { weekStartsOn: 1 })
+  return addWeeks(rowStart, col)
 }
 
 /**
  * Returns the 0-based week index from birthday for a given date string "YYYY-MM-DD".
+ * Row = age in full years; col = weeks since that birthday's row start.
  */
 export function dateToWeekIndex(birthday, dateStr) {
-  const base = startOfWeek(parseISO(birthday), { weekStartsOn: 1 })
-  const target = startOfWeek(parseISO(dateStr), { weekStartsOn: 1 })
-  return differenceInCalendarWeeks(target, base, { weekStartsOn: 1 })
+  const bd = parseISO(birthday)
+  const date = parseISO(dateStr)
+  const row = Math.max(0, differenceInCalendarYears(date, bd))
+  const rowStart = startOfWeek(addYears(bd, row), { weekStartsOn: 1 })
+  const col = differenceInCalendarWeeks(
+    startOfWeek(date, { weekStartsOn: 1 }),
+    rowStart,
+    { weekStartsOn: 1 }
+  )
+  return row * WEEKS_PER_ROW + Math.min(Math.max(col, 0), WEEKS_PER_ROW - 1)
 }
 
 /**
