@@ -54,9 +54,10 @@ function App() {
     const inCat = enriched
       .filter(e => e.categoryId === filterCatId)
       .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
-    const GOLDEN_ANGLE = 137.508
+    const ROUND = 10
+    const SHIFT = 18 // half-step between rounds, fills gaps
     return Object.fromEntries(inCat.map((e, i) => {
-      const hue = Math.round((i * GOLDEN_ANGLE + 15) % 360)
+      const hue = Math.round(((i % ROUND) * (360 / ROUND) + Math.floor(i / ROUND) * SHIFT) % 360)
       return [e.id, `hsl(${hue}, 65%, 58%)`]
     }))
   }, [filterCatId, events, birthday])
