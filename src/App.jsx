@@ -51,10 +51,12 @@ function App() {
     if (!filterCatId || !birthday) return null
     const enriched = enrichEvents(events, birthday)
     const nowIndex = currentWeekIndex(birthday)
-    const inCat = enriched.filter(e => e.categoryId === filterCatId)
-    const n = inCat.length
+    const inCat = enriched
+      .filter(e => e.categoryId === filterCatId)
+      .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
+    const GOLDEN_ANGLE = 137.508
     return Object.fromEntries(inCat.map((e, i) => {
-      const hue = Math.round((i * 360 / Math.max(n, 1) + 15) % 360)
+      const hue = Math.round((i * GOLDEN_ANGLE + 15) % 360)
       return [e.id, `hsl(${hue}, 65%, 58%)`]
     }))
   }, [filterCatId, events, birthday])
