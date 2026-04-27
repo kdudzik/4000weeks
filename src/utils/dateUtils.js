@@ -5,6 +5,7 @@ import {
   endOfWeek,
   differenceInCalendarWeeks,
   differenceInCalendarYears,
+  differenceInYears,
   differenceInMonths,
   isAfter,
   isBefore,
@@ -46,7 +47,7 @@ export function weekIndexToDate(birthday, weekIndex) {
 export function dateToWeekIndex(birthday, dateStr) {
   const bd = parseLocal(birthday)
   const date = parseLocal(dateStr)
-  const row = Math.max(0, differenceInCalendarYears(date, bd))
+  const row = Math.max(0, differenceInYears(date, bd))
   const rowStart = startOfWeek(addYears(bd, row), { weekStartsOn: 1 })
   const col = differenceInCalendarWeeks(
     startOfWeek(date, { weekStartsOn: 1 }),
