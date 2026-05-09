@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useLifeData } from './hooks/useLifeData'
 import SetupScreen from './components/SetupScreen'
 import WeekGrid from './components/WeekGrid'
 import EventPanel from './components/EventPanel'
 import AddEventModal from './components/AddEventModal'
-import { enrichEvents, currentWeekIndex } from './utils/dateUtils'
+import { enrichEvents } from './utils/dateUtils'
 import { DEMO_DATA } from './data/demoData'
 
 function App() {
@@ -45,22 +45,72 @@ function App() {
   const [highlightEventId, setHighlightEventId] = useState(null)
   const [filterCatId, setFilterCatId] = useState(null)
   const [calendarMode, setCalendarMode] = useState(false)
+  const tooltipRef = useRef(null)
+  const showTooltip = useCallback((x, y, html, anchorEl) => {
+    const el = tooltipRef.current
+    if (!el) return
+    el.innerHTML = html
+    el.style.display = 'block'
+    if (anchorEl) {
+      const r = anchorEl.getBoundingClientRect()
+      el.style.left = Math.min(r.left, window.innerWidth - 240) + 'px'
+      el.style.top = (r.bottom + 6) + 'px'
+    } else {
+      el.style.left = Math.min(x + 14, window.innerWidth - 240) + 'px'
+      el.style.top = (y - 10) + 'px'
+    }
+  }, [])
+  const hideTooltip = useCallback(() => {
+    if (tooltipRef.current) tooltipRef.current.style.display = 'none'
+  }, [])
+  const svgRef = useRef(null)
+  const gridRef = useRef(null)
+  const [overlapMode, setOverlapMode] = useState(() => Number(localStorage.getItem('4kw_overlap_mode')) || 3)
+  const [colorByEvent, setColorByEvent] = useState(() => localStorage.getItem('4kw_color_by_event') === '1')
   const [quickAddDefaults, setQuickAddDefaults] = useState(null)
 
   const filterEventColors = useMemo(() => {
-    if (!filterCatId || !birthday) return null
+    if (!birthday) return null
     const enriched = enrichEvents(events, birthday)
-    const nowIndex = currentWeekIndex(birthday)
+    if (colorByEvent && !filterCatId) {
+      const sorted = [...enriched].sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
+      return Object.fromEntries(sorted.map((e, i) => [e.id, `hsl(${Math.round((i * 137.508) % 360)}, 65%, 58%)`]))
+    }
+    if (!filterCatId) return null
     const inCat = enriched
       .filter(e => e.categoryId === filterCatId)
       .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''))
-    const ROUND = 10
-    const SHIFT = 18 // half-step between rounds, fills gaps
-    return Object.fromEntries(inCat.map((e, i) => {
-      const hue = Math.round(((i % ROUND) * (360 / ROUND) + Math.floor(i / ROUND) * SHIFT) % 360)
-      return [e.id, `hsl(${hue}, 65%, 58%)`]
-    }))
-  }, [filterCatId, events, birthday])
+    return Object.fromEntries(inCat.map((e, i) => [e.id, `hsl(${Math.round((i * 137.508) % 360)}, 65%, 58%)`]))
+  }, [filterCatId, colorByEvent, events, birthday])
+
+  const exportPng = useCallback(() => {
+    const svgStr = gridRef.current?.buildExportSvg()
+    if (!svgStr) return
+    const parser = new DOMParser()
+    const svgDoc = parser.parseFromString(svgStr, 'image/svg+xml')
+    const svgEl = svgDoc.documentElement
+    const w = parseFloat(svgEl.getAttribute('width'))
+    const h = parseFloat(svgEl.getAttribute('height'))
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const scale = 2
+      canvas.width = w * scale
+      canvas.height = h * scale
+      const ctx = canvas.getContext('2d')
+      ctx.scale(scale, scale)
+      ctx.drawImage(img, 0, 0)
+      URL.revokeObjectURL(url)
+      const a = document.createElement('a')
+      const slug = (name || 'export').toLowerCase().replace(/\s+/g, '-')
+      a.download = `4000weeks-${slug}.png`
+      a.href = canvas.toDataURL('image/png')
+      a.click()
+    }
+    img.src = url
+  }, [name])
 
   const handleClearDemo = (skipConfirm = false) => {
     if (!skipConfirm && !window.confirm('This will delete all demo data and start fresh. Continue?')) return
@@ -91,6 +141,7 @@ function App() {
   }
 
   return (
+    <>
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Demo banner */}
       {isDemo && (
@@ -137,10 +188,10 @@ function App() {
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onMouseEnter={e => showTooltip(0, 0, theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode', e.currentTarget)}
+            onMouseLeave={hideTooltip}
             style={{
-              padding: '4px', border: 'none', cursor: 'pointer',
-              borderRadius: 4, background: 'transparent',
+              padding: '4px', border: 'none', cursor: 'pointer', borderRadius: 4, background: 'transparent',
               color: 'var(--text-secondary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 24, height: 24,
@@ -166,11 +217,12 @@ function App() {
           </button>
           {/* Font size toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {[['dense', 10], ['comfortable', 16]].map(([size, px]) => (
+            {[['dense', 10, 'Compact layout'], ['comfortable', 16, 'Spacious layout']].map(([size, px, tip]) => (
               <button
                 key={size}
                 onClick={() => toggleFontSize(size)}
-                title={size}
+                onMouseEnter={e => showTooltip(0, 0, tip, e.currentTarget)}
+                onMouseLeave={hideTooltip}
                 style={{
                   fontSize: px, padding: '2px 6px', border: 'none', cursor: 'pointer',
                   borderRadius: 4,
@@ -184,12 +236,62 @@ function App() {
               </button>
             ))}
           </div>
+          {/* Color mode toggle — only when not filtered */}
+          {!filterCatId && (
+            <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: 6, padding: 2, gap: 2 }}>
+              {[
+                ['category', false, 'Color all events by their category color'],
+                ['event',    true,  'Assign each event its own unique color'],
+              ].map(([lbl, val, tip]) => (
+                <button
+                  key={lbl}
+                  onClick={() => { setColorByEvent(val); localStorage.setItem('4kw_color_by_event', val ? '1' : '0') }}
+                  onMouseEnter={e => showTooltip(0, 0, tip, e.currentTarget)}
+                  onMouseLeave={hideTooltip}
+                  style={{
+                    fontSize: 10, padding: '3px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
+                    background: colorByEvent === val ? 'var(--bg-hover)' : 'transparent',
+                    color: colorByEvent === val ? 'var(--text-primary)' : 'var(--text-muted)',
+                    letterSpacing: '0.06em', textTransform: 'uppercase',
+                  }}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Overlap mode toggle */}
+          <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: 6, padding: 2, gap: 2 }}>
+            {[
+              [1, 'Show only the shortest event per week'],
+              [2, 'Show two shortest events as a diagonal split'],
+              [3, 'Show all overlapping events as pie slices'],
+              [4, 'Blend all overlapping event colors into one'],
+            ].map(([val, tip]) => (
+              <button
+                key={val}
+                onClick={() => { setOverlapMode(val); localStorage.setItem('4kw_overlap_mode', val) }}
+                onMouseEnter={e => showTooltip(0, 0, tip, e.currentTarget)}
+                onMouseLeave={hideTooltip}
+                style={{
+                  fontSize: 10, padding: '3px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
+                  background: overlapMode === val ? 'var(--bg-hover)' : 'transparent',
+                  color: overlapMode === val ? 'var(--text-primary)' : 'var(--text-muted)',
+                  letterSpacing: '0.06em', textTransform: 'uppercase',
+                }}
+              >
+                {val === 3 ? 'all' : val === 4 ? 'blend' : val}
+              </button>
+            ))}
+          </div>
           {/* View toggle */}
           <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: 6, padding: 2, gap: 2 }}>
-            {[['life', false], ['calendar', true]].map(([lbl, val]) => (
+            {[['life', false, 'View your entire life as a grid of weeks'], ['calendar', true, 'View weeks aligned to calendar years']].map(([lbl, val, tip]) => (
               <button
                 key={lbl}
                 onClick={() => setCalendarMode(val)}
+                onMouseEnter={e => showTooltip(0, 0, tip, e.currentTarget)}
+                onMouseLeave={hideTooltip}
                 style={{
                   fontSize: 10, padding: '3px 10px', borderRadius: 4, border: 'none', cursor: 'pointer',
                   background: calendarMode === val ? 'var(--bg-hover)' : 'transparent',
@@ -205,7 +307,7 @@ function App() {
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--week-past-empty)' }} />
             <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>past</span>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--week-today)', marginLeft: 8 }} />
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: '#000000', marginLeft: 8, outline: '1.5px solid var(--text-muted)' }} />
             <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>now</span>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--week-future)', marginLeft: 8, border: '1px solid var(--border)' }} />
             <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>future</span>
@@ -213,6 +315,7 @@ function App() {
         </div>
 
         <WeekGrid
+          ref={gridRef}
           birthday={birthday}
           events={events}
           categories={categories}
@@ -220,8 +323,12 @@ function App() {
           filterCatId={filterCatId}
           filterEventColors={filterEventColors}
           calendarMode={calendarMode}
+          overlapMode={overlapMode}
+          showTooltip={showTooltip}
+          hideTooltip={hideTooltip}
           onCellSelect={(startDate, endDate) => setQuickAddDefaults({ startDate, endDate })}
           density={fontSize}
+          svgRef={svgRef}
         />
       </div>
 
@@ -255,12 +362,15 @@ function App() {
         onUpdateBirthday={setBirthday}
         onUpdateName={setName}
         onReset={() => handleClearDemo(true)}
+        onExportPng={exportPng}
         onExport={exportData}
         onImport={handleImport}
         density={fontSize}
       />
       </div>
     </div>
+    <div ref={tooltipRef} className="tooltip" style={{ display: 'none', pointerEvents: 'none' }} />
+    </>
   )
 }
 

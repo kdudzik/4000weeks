@@ -25,8 +25,7 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent, d
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const selectedCat = categories.find(c => c.id === categoryId)
-  const displayColor = color || selectedCat?.color || '#888'
+
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -86,8 +85,23 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent, d
 
           {/* Color override */}
           <div style={{ marginBottom: 20 }}>
-            <label>Color override (optional)</label>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              Color override (optional)
+              {color && (
+                <button
+                  type="button"
+                  onClick={() => setColor(null)}
+                  style={{
+                    fontSize: 10, color: 'var(--text-muted)', background: 'transparent',
+                    border: '1px solid var(--border)', borderRadius: 4, padding: '2px 6px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  clear
+                </button>
+              )}
+            </label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {HEX_COLORS.map(c => (
                 <button
                   key={c}
@@ -103,24 +117,6 @@ export default function AddEventModal({ categories, onAdd, onClose, editEvent, d
                   }}
                 />
               ))}
-              {color && (
-                <button
-                  type="button"
-                  onClick={() => setColor(null)}
-                  style={{
-                    fontSize: 10, color: 'var(--text-muted)', background: 'transparent',
-                    border: '1px solid var(--border)', borderRadius: 4, padding: '2px 6px',
-                  }}
-                >
-                  clear
-                </button>
-              )}
-            </div>
-            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 14, height: 14, borderRadius: 3, background: displayColor }} />
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                {color ? 'custom color' : 'default color'}
-              </span>
             </div>
           </div>
 

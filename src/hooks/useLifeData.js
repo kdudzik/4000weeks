@@ -1,17 +1,31 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+
+export const DEFAULT_CATEGORY_COLORS = {
+  relationship: '#ef4444', // red        0°  — love/passion
+  home:         '#a8a29e', // warm gray  —    neutral background presence
+  job:          '#eab308', // yellow    50°  — work/money
+  birth:        '#84cc16', // lime      85°  — new life/spring
+  health:       '#22c55e', // green    142°  — vitality
+  travel:       '#06b6d4', // cyan     190°  — open skies
+  school:       '#3b82f6', // blue     215°  — learning
+  university:   '#8b5cf6', // violet   262°  — academia
+  other:        '#d946ef', // fuchsia  295°  — misc
+  pets:         '#f472b6', // pink     330°  — playful
+  death:        '#475569', // dark slate —     quiet/neutral
+}
 
 const DEFAULT_CATEGORIES = [
-  { id: 'home',         label: 'Home',          color: '#34d399', icon: '🏠' },
-  { id: 'school',       label: 'School',        color: '#60a5fa', icon: '📚' },
-  { id: 'university',   label: 'University',    color: '#818cf8', icon: '🎓' },
-  { id: 'job',          label: 'Job',           color: '#fbbf24', icon: '💼' },
-  { id: 'relationship', label: 'Relationship',  color: '#f472b6', icon: '❤️' },
-  { id: 'travel',       label: 'Travel',        color: '#a78bfa', icon: '✈️' },
-  { id: 'health',       label: 'Health',        color: '#fb923c', icon: '🏥' },
-  { id: 'birth',        label: 'Birth',         color: '#a3e635', icon: '🌱' },
-  { id: 'death',        label: 'Death',         color: '#94a3b8', icon: '🕯️' },
-  { id: 'pets',         label: 'Pet',           color: '#22d3ee', icon: '🐾' },
-  { id: 'other',        label: 'Other',         color: '#e879f9', icon: '💠'  },
+  { id: 'home',         label: 'Home',          color: DEFAULT_CATEGORY_COLORS.home,         icon: '🏠' },
+  { id: 'school',       label: 'School',        color: DEFAULT_CATEGORY_COLORS.school,       icon: '📚' },
+  { id: 'university',   label: 'University',    color: DEFAULT_CATEGORY_COLORS.university,   icon: '🎓' },
+  { id: 'job',          label: 'Job',           color: DEFAULT_CATEGORY_COLORS.job,          icon: '💼' },
+  { id: 'relationship', label: 'Relationship',  color: DEFAULT_CATEGORY_COLORS.relationship, icon: '❤️' },
+  { id: 'travel',       label: 'Travel',        color: DEFAULT_CATEGORY_COLORS.travel,       icon: '✈️' },
+  { id: 'health',       label: 'Health',        color: DEFAULT_CATEGORY_COLORS.health,       icon: '🏥' },
+  { id: 'birth',        label: 'Birth',         color: DEFAULT_CATEGORY_COLORS.birth,        icon: '🌱' },
+  { id: 'death',        label: 'Death',         color: DEFAULT_CATEGORY_COLORS.death,        icon: '🕯️' },
+  { id: 'pets',         label: 'Pet',           color: DEFAULT_CATEGORY_COLORS.pets,         icon: '🐾' },
+  { id: 'other',        label: 'Other',         color: DEFAULT_CATEGORY_COLORS.other,        icon: '💠' },
 ]
 
 function load(key, fallback) {
@@ -51,11 +65,6 @@ export function useLifeData() {
   const setName = useCallback((n) => {
     setNameState(n)
     save('4kw_name', n)
-  }, [])
-
-  const setCategories = useCallback((cats) => {
-    setCategoriesState(cats)
-    save('4kw_categories', cats)
   }, [])
 
   const addCategory = useCallback((cat) => {

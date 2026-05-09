@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback, useRef } from 'react'
-import { format, getYear } from 'date-fns'
+import { useMemo, useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
+import { format } from 'date-fns'
 import {
   weekIndexToDate,
   enrichEvents,
@@ -11,11 +11,12 @@ import {
   dateToCalWeekIndex,
   calWeekIndexToDate,
   getMonthCols,
+  blendColors,
 } from '../utils/dateUtils'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-export default function WeekGrid({ birthday, events, categories, highlightEventId, filterCatId, filterEventColors, calendarMode, onCellSelect, density = 'dense' }) {
+const WeekGrid = forwardRef(function WeekGrid({ birthday, events, categories, highlightEventId, filterCatId, filterEventColors, calendarMode, overlapMode = 3, showTooltip: showTooltipProp, hideTooltip: hideTooltipProp, onCellSelect, density = 'dense', svgRef }, ref) {
   const CELL_SIZE = density === 'dense' ? 10 : 15
   const CELL_GAP = density === 'dense' ? 1 : 2
   const CELL_STEP = CELL_SIZE + CELL_GAP
@@ -23,7 +24,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
   const HEADER_H = 24
   const AXIS_FONT = density === 'dense' ? 9 : 11
   const totalRows = useMemo(() => getTotalRows(birthday), [birthday])
-  const tooltipRef = useRef(null)
+  const tooltipRef = useRef(null) // kept for internal fallback only
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
   const isDragging = dragStart !== null
@@ -102,20 +103,28 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
           : ((b.event._endWeek ?? nowIndex) - b.event._startWeek)
         return durA - durB
       })
-      const colors = sorted.map(m =>
+      const allColors = sorted.map(m =>
         filterEventColors && !m.event.color ? (filterEventColors[m.event.id] ?? m.color) : m.color
       )
-      const color = colors.length > 0 ? colors[0] : null
+      const visibleColors = overlapMode === 1
+        ? allColors.slice(0, 1)
+        : overlapMode === 2
+          ? [...sorted.slice(0, 2)].sort((a, b) => (a.event.startDate ?? '').localeCompare(b.event.startDate ?? '')).map(m =>
+              filterEventColors && !m.event.color ? (filterEventColors[m.event.id] ?? m.color) : m.color
+            )
+          : allColors
+      const color = visibleColors.length > 0 ? blendColors(visibleColors) : null
+      const multiColors = overlapMode !== 4 && visibleColors.length >= 2 ? visibleColors : null
 
-      result.push({ index: i, row, col, color, eventInfos: matched, filteredEventIds: filterCatId ? new Set(displayMatched.map(m => m.event.id)) : null, isPast, isToday, isPreBirth, cellDate })
+      result.push({ index: i, row, col, color, multiColors, eventInfos: matched, filteredEventIds: filterCatId ? new Set(displayMatched.map(m => m.event.id)) : null, isPast, isToday, isPreBirth, cellDate })
     }
     return result
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enriched, calEnriched, categories, totalCells, highlightEventId, filterCatId, filterEventColors, nowIndex, nowCalIndex, birthCalIndex, calendarMode])
+  }, [enriched, calEnriched, categories, totalCells, highlightEventId, filterCatId, filterEventColors, nowIndex, nowCalIndex, birthCalIndex, calendarMode, overlapMode])
 
   const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
 
-  const showTooltip = useCallback((x, y, html) => {
+  const showTooltipInternal = useCallback((x, y, html) => {
     const el = tooltipRef.current
     if (!el) return
     el.innerHTML = html
@@ -123,10 +132,11 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
     el.style.left = Math.min(x + 14, window.innerWidth - 240) + 'px'
     el.style.top = (y - 10) + 'px'
   }, [])
-
-  const hideTooltip = useCallback(() => {
+  const hideTooltipInternal = useCallback(() => {
     if (tooltipRef.current) tooltipRef.current.style.display = 'none'
   }, [])
+  const showTooltip = showTooltipProp ?? showTooltipInternal
+  const hideTooltip = hideTooltipProp ?? hideTooltipInternal
 
   const handleMouseEnter = useCallback((e, cell) => {
     const { index, row, isPreBirth, cellDate, eventInfos, filteredEventIds } = cell
@@ -144,8 +154,9 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
       const primary = filteredEventIds ? eventInfos.filter(m => filteredEventIds.has(m.event.id)) : eventInfos
       const context = filteredEventIds ? eventInfos.filter(m => !filteredEventIds.has(m.event.id)) : []
       for (const { event, category, color } of primary) {
+        const displayColor = filterEventColors && !event.color ? (filterEventColors[event.id] ?? color) : color
         html += `<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-          <div style="width:8px;height:8px;border-radius:2px;background:${esc(color)};flex-shrink:0"></div>
+          <div style="width:8px;height:8px;border-radius:2px;background:${esc(displayColor)};flex-shrink:0"></div>
           <span style="font-size:11px;color:var(--text-primary)">${esc(category?.icon ?? '')} ${esc(event.label)}</span>
         </div>`
       }
@@ -156,7 +167,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
       }
     }
     showTooltip(e.clientX, e.clientY, html)
-  }, [birthday, calendarMode, birthYear, isDragging, showTooltip])
+  }, [birthday, calendarMode, isDragging, showTooltip, filterEventColors])
 
   const handleMouseMove = useCallback((e) => {
     const el = tooltipRef.current
@@ -200,6 +211,47 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
 
   const gridW = WEEKS_PER_ROW * CELL_STEP - CELL_GAP
   const gridH = totalRows * CELL_STEP - CELL_GAP
+
+  useImperativeHandle(ref, () => ({
+    buildExportSvg() {
+      const innerSvg = svgRef?.current
+      if (!innerSvg) return null
+      const cssVars = getComputedStyle(document.documentElement)
+      const resolveVar = s => s.replace(/var\(--([^)]+)\)/g, (_, v) => cssVars.getPropertyValue(`--${v}`).trim() || '#888')
+      const bg = cssVars.getPropertyValue('--bg-primary').trim() || '#fff'
+      const textMuted = cssVars.getPropertyValue('--text-muted').trim() || '#888'
+      const PAD = 16
+      const totalW = LABEL_W + gridW + PAD
+      const totalH = HEADER_H + gridH + PAD
+      const fontFamily = 'monospace'
+
+      // Column header labels
+      const colLabels = calendarMode
+        ? monthCols.map((col, m) => col < WEEKS_PER_ROW
+            ? `<text x="${LABEL_W + col * CELL_STEP}" y="${HEADER_H - 4}" font-size="${AXIS_FONT}" fill="${textMuted}" font-family="${fontFamily}">${MONTH_NAMES[m]}</text>`
+            : '').join('')
+        : [0,10,20,30,40,50].map(w =>
+            `<text x="${LABEL_W + w * CELL_STEP}" y="${HEADER_H - 4}" font-size="${AXIS_FONT}" fill="${textMuted}" font-family="${fontFamily}">week ${w}</text>`
+          ).join('')
+
+      // Row labels (every 5th)
+      const rowLabels = Array.from({ length: totalRows }, (_, row) => {
+        if (row % 5 !== 0) return ''
+        const label = calendarMode ? birthYear + row : row
+        const y = HEADER_H + row * CELL_STEP + CELL_SIZE - 1
+        return `<text x="${LABEL_W - 4}" y="${y}" font-size="${AXIS_FONT}" fill="${textMuted}" font-family="${fontFamily}" text-anchor="end">${label}</text>`
+      }).join('')
+
+      let innerContent = resolveVar(innerSvg.innerHTML)
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}">
+  <rect width="${totalW}" height="${totalH}" fill="${bg}"/>
+  ${colLabels}
+  ${rowLabels}
+  <g transform="translate(${LABEL_W},${HEADER_H})">${innerContent}</g>
+</svg>`
+    }
+  }), [svgRef, calendarMode, birthYear, monthCols, totalRows, gridW, gridH, CELL_SIZE, CELL_STEP, LABEL_W, HEADER_H, AXIS_FONT])
 
   return (
     <div
@@ -261,6 +313,7 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
 
           {/* SVG cells */}
           <svg
+            ref={svgRef}
             width={gridW} height={gridH}
             style={{ overflow: 'visible', display: 'block', userSelect: 'none' }}
             onMouseUp={handleSvgMouseUp}
@@ -269,21 +322,59 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
               const dragLo = dragStart !== null ? Math.min(dragStart, dragEnd ?? dragStart) : -1
               const dragHi = dragStart !== null ? Math.max(dragStart, dragEnd ?? dragStart) : -1
               return cells.map((cell) => {
-              const { index, row, col, color, isPast, isToday, isPreBirth } = cell
+              const { index, row, col, color, multiColors, isPast, isToday, isPreBirth } = cell
               const x = col * CELL_STEP
               const y = row * CELL_STEP
 
               const inDrag = dragStart !== null && index >= dragLo && index <= dragHi && !isPreBirth
 
+              const opacity = isPreBirth ? 0.3 : inDrag ? 0.7 : isToday ? 1 : color ? (isPast ? 1 : 0.35) : 1
+              const cursor = { cursor: isPreBirth ? 'default' : isDragging ? 'crosshair' : 'pointer' }
+              const handlers = { onMouseEnter: e => handleMouseEnter(e, cell), onMouseLeave: handleMouseLeave, onMouseDown: e => handleCellMouseDown(e, cell) }
+
+              if (!inDrag && !isPreBirth && !isToday && multiColors) {
+                if (overlapMode === 2) {
+                  return (
+                    <g key={index} opacity={opacity} style={cursor} {...handlers}>
+                      <polygon points={`${x},${y} ${x + CELL_SIZE},${y} ${x},${y + CELL_SIZE}`} fill={multiColors[0]} />
+                      <polygon points={`${x + CELL_SIZE},${y} ${x + CELL_SIZE},${y + CELL_SIZE} ${x},${y + CELL_SIZE}`} fill={multiColors[1]} />
+                    </g>
+                  )
+                }
+                const cx = x + CELL_SIZE / 2, cy = y + CELL_SIZE / 2, h = CELL_SIZE / 2
+                const N = multiColors.length
+                const sliceAngle = (2 * Math.PI) / N
+                const startBase = -Math.PI / 2
+                function edgePt(a) {
+                  const c = Math.cos(a), s = Math.sin(a)
+                  const t = h / Math.max(Math.abs(c), Math.abs(s))
+                  return `${cx + c * t},${cy + s * t}`
+                }
+                const CORNERS = [-Math.PI / 4, Math.PI / 4, 3 * Math.PI / 4, -3 * Math.PI / 4]
+                return (
+                  <g key={index} opacity={opacity} style={cursor} {...handlers}>
+                    {multiColors.map((c, i) => {
+                      const sa = startBase + i * sliceAngle
+                      const ea = sa + sliceAngle
+                      const pts = [`${cx},${cy}`, edgePt(sa)]
+                      for (let ca of CORNERS) {
+                        while (ca <= sa) ca += 2 * Math.PI
+                        if (ca < ea) pts.push(edgePt(ca))
+                      }
+                      pts.push(edgePt(ea))
+                      return <polygon key={i} points={pts.join(' ')} fill={c} />
+                    })}
+                  </g>
+                )
+              }
+
               let fill
               if (isPreBirth) fill = 'var(--bg-secondary)'
               else if (inDrag) fill = 'var(--accent)'
-              else if (isToday) fill = 'var(--week-today)'
+              else if (isToday) fill = '#000000'
               else if (color) fill = color
               else if (isPast) fill = 'var(--week-past-empty)'
               else fill = 'var(--week-future)'
-
-              const opacity = isPreBirth ? 0.3 : inDrag ? 0.7 : color ? (isPast || isToday ? 1 : 0.35) : 1
 
               return (
                 <rect
@@ -293,10 +384,10 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
                   rx={0}
                   fill={fill}
                   opacity={opacity}
-                  style={{ cursor: isPreBirth ? 'default' : isDragging ? 'crosshair' : 'pointer' }}
-                  onMouseEnter={e => handleMouseEnter(e, cell)}
-                  onMouseLeave={handleMouseLeave}
-                  onMouseDown={e => handleCellMouseDown(e, cell)}
+                  stroke={isToday ? 'var(--text-muted)' : 'none'}
+                  strokeWidth={isToday ? 1.5 : 0}
+                  style={cursor}
+                  {...handlers}
                 />
               )
             })
@@ -347,8 +438,10 @@ export default function WeekGrid({ birthday, events, categories, highlightEventI
       </div>
       </div>
 
-      {/* Tooltip — always in DOM, shown/hidden imperatively to avoid re-renders */}
-      <div ref={tooltipRef} className="tooltip" style={{ display: 'none', pointerEvents: 'none' }} />
+      {/* Fallback tooltip — only used when showTooltip prop is not provided */}
+      {!showTooltipProp && <div ref={tooltipRef} className="tooltip" style={{ display: 'none', pointerEvents: 'none' }} />}
     </div>
   )
-}
+})
+
+export default WeekGrid

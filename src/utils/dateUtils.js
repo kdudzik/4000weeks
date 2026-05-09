@@ -7,9 +7,6 @@ import {
   differenceInCalendarYears,
   differenceInYears,
   differenceInMonths,
-  isAfter,
-  isBefore,
-  isEqual,
   format,
   getYear,
 } from 'date-fns'
@@ -201,8 +198,24 @@ export function blendColors(colors) {
   return `rgb(${avg.r},${avg.g},${avg.b})`
 }
 
-function hexToRgb(hex) {
-  const m = hex.replace('#', '').match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
-  if (!m) return null
-  return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) }
+function hexToRgb(color) {
+  const hex = color.replace('#', '').match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
+  if (hex) return { r: parseInt(hex[1], 16), g: parseInt(hex[2], 16), b: parseInt(hex[3], 16) }
+  const rgb = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/)
+  if (rgb) return { r: +rgb[1], g: +rgb[2], b: +rgb[3] }
+  const hsl = color.match(/^hsl\((\d+),\s*([\d.]+)%,\s*([\d.]+)%\)$/)
+  if (hsl) {
+    const h = +hsl[1] / 360, s = +hsl[2] / 100, l = +hsl[3] / 100
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+    const p = 2 * l - q
+    const hue2rgb = (t) => {
+      if (t < 0) t += 1; if (t > 1) t -= 1
+      if (t < 1/6) return p + (q - p) * 6 * t
+      if (t < 1/2) return q
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6
+      return p
+    }
+    return { r: Math.round(hue2rgb(h + 1/3) * 255), g: Math.round(hue2rgb(h) * 255), b: Math.round(hue2rgb(h - 1/3) * 255) }
+  }
+  return null
 }

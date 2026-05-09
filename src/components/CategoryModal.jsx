@@ -6,10 +6,15 @@ const PRESET_COLORS = [
   '#818cf8', '#a78bfa', '#e879f9', '#94a3b8',
 ]
 
-export default function CategoryModal({ category, onSave, onDelete, onClose }) {
+function wheelColor(index) {
+  const hue = Math.round((index * 137.508) % 360)
+  return `hsl(${hue}, 65%, 58%)`
+}
+
+export default function CategoryModal({ category, categoryCount = 0, onSave, onDelete, onClose }) {
   const isNew = !category
   const [label, setLabel] = useState(category?.label || '')
-  const [color, setColor] = useState(category?.color || PRESET_COLORS[0])
+  const [color, setColor] = useState(category?.color || wheelColor(categoryCount))
   const [icon, setIcon] = useState(category?.icon || '')
 
   useEffect(() => {

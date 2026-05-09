@@ -2,6 +2,11 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import AddEventModal from './AddEventModal'
 import CategoryModal from './CategoryModal'
 import { formatEventAge, formatEventDuration } from '../utils/dateUtils'
+import { DEFAULT_CATEGORY_COLORS } from '../hooks/useLifeData'
+
+function wheelColor(index) {
+  return `hsl(${Math.round((index * 137.508) % 360)}, 65%, 58%)`
+}
 
 export default function EventPanel({
   events, categories,
@@ -11,7 +16,7 @@ export default function EventPanel({
   filterCatId, onFilterCat, filterEventColors,
   birthday, name,
   onUpdateBirthday, onUpdateName,
-  onReset, onExport, onImport,
+  onReset, onExportPng, onExport, onImport,
   density = 'dense',
 }) {
   const zoom = density === 'dense' ? 1 : 1.18
@@ -331,9 +336,10 @@ export default function EventPanel({
             <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', letterSpacing: '0.03em' }}>
               or click · drag on the grid
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8 }}>
-              <button className="btn-ghost" style={{ fontSize: 11 }} onClick={onExport}>↓ Export</button>
-              <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => fileInputRef.current?.click()}>↑ Import</button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8 }}>
+              <button className="btn-ghost" style={{ fontSize: 11 }} onClick={onExportPng}>Export PNG</button>
+              <button className="btn-ghost" style={{ fontSize: 11 }} onClick={onExport}>Export JSON</button>
+              <button className="btn-ghost" style={{ fontSize: 11 }} onClick={() => fileInputRef.current?.click()}>Import JSON</button>
               <div ref={menuRef} style={{ position: 'relative' }}>
                 <button className="btn-ghost" style={{ fontSize: 14, padding: 0, height: '100%', aspectRatio: '1', color: '#ef444460', borderColor: '#ef444420' }} onClick={() => setShowMenu(v => !v)}>🗑</button>
                 {showMenu && (
@@ -395,6 +401,10 @@ export default function EventPanel({
               onClick={() => { setEditingCat(null); setShowCatModal(true) }}>
               + New category
             </button>
+            <button className="btn-ghost" style={{ width: '100%', fontSize: 11 }}
+              onClick={() => categories.forEach((cat, i) => onUpdateCategory(cat.id, { ...cat, color: DEFAULT_CATEGORY_COLORS[cat.id] ?? wheelColor(i) }))}>
+              Reset colors to default
+            </button>
           </div>
         </div>
       )}
@@ -436,6 +446,7 @@ export default function EventPanel({
       {showCatModal && (
         <CategoryModal
           category={editingCat}
+          categoryCount={categories.length}
           onSave={(data) => {
             if (editingCat) onUpdateCategory(data.id, data)
             else onAddCategory(data)
