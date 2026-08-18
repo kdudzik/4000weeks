@@ -10,16 +10,16 @@ importers:
     dependencies:
       '@vercel/analytics':
         specifier: ^2.0.1
-        version: 2.0.1(react@19.2.5)
+        version: 2.0.1(react@19.2.8)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
       react:
-        specifier: ^19.2.5
-        version: 19.2.5
+        specifier: ^19.2.8
+        version: 19.2.8
       react-dom:
         specifier: ^19.2.5
-        version: 19.2.5(react@19.2.5)
+        version: 19.2.5(react@19.2.8)
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -28,11 +28,11 @@ importers:
         specifier: ^4.2.4
         version: 4.2.4(vite@8.0.10(jiti@2.6.1))
       '@types/react':
-        specifier: ^19.2.14
-        version: 19.2.14
+        specifier: ^19.2.18
+        version: 19.2.18
       '@types/react-dom':
         specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.3(@types/react@19.2.18)
       '@vitejs/plugin-react':
         specifier: ^6.0.5
         version: 6.0.5(vite@8.0.10(jiti@2.6.1))
@@ -435,8 +435,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.14':
-    resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+  '@types/react@19.2.18':
+    resolution: {integrity: sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w==}
 
   '@vercel/analytics@2.0.1':
     resolution: {integrity: sha512-MTQG6V9qQrt1tsDeF+2Uoo5aPjqbVPys1xvnIftXSJYG2SrwXRHnqEvVoYID7BTruDz4lCd2Z7rM1BdkUehk2g==}
@@ -882,8 +882,8 @@ packages:
     peerDependencies:
       react: ^19.2.5
 
-  react@19.2.5:
-    resolution: {integrity: sha512-llUJLzz1zTUBrskt2pwZgLq59AemifIftw4aB7JxOqf1HY2FDaGDxgwpAPVzHU1kdWabH7FauP4i1oEeer2WCA==}
+  react@19.2.8:
+    resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
     engines: {node: '>=0.10.0'}
 
   rolldown@1.0.0-rc.17:
@@ -1333,17 +1333,17 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/react-dom@19.2.3(@types/react@19.2.14)':
+  '@types/react-dom@19.2.3(@types/react@19.2.18)':
     dependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.2.18
 
-  '@types/react@19.2.14':
+  '@types/react@19.2.18':
     dependencies:
       csstype: 3.2.3
 
-  '@vercel/analytics@2.0.1(react@19.2.5)':
+  '@vercel/analytics@2.0.1(react@19.2.8)':
     optionalDependencies:
-      react: 19.2.5
+      react: 19.2.8
 
   '@vitejs/plugin-react@6.0.5(vite@8.0.10(jiti@2.6.1))':
     dependencies:
@@ -1694,12 +1694,12 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  react-dom@19.2.5(react@19.2.5):
+  react-dom@19.2.5(react@19.2.8):
     dependencies:
-      react: 19.2.5
+      react: 19.2.8
       scheduler: 0.27.0
 
-  react@19.2.5: {}
+  react@19.2.8: {}
 
   rolldown@1.0.0-rc.17:
     dependencies:
