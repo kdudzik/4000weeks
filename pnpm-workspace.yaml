@@ -1,0 +1,8 @@
+packages:
+  - .
+
+overrides:
+  # Security fix: brace-expansion ReDoS/DoS advisories, via minimatch (eslint tooling).
+  # Kept in pnpm-workspace.yaml (not package.json): Dependabot drops overrides declared in
+  # package.json when it regenerates the lockfile, which breaks --frozen-lockfile in CI.
+  'brace-expansion@>=5.0.0 <5.0.12': '^5.0.12'
