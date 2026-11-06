@@ -6,3 +6,7 @@ overrides:
   # Kept in pnpm-workspace.yaml (not package.json): Dependabot drops overrides declared in
   # package.json when it regenerates the lockfile, which breaks --frozen-lockfile in CI.
   'brace-expansion@>=5.0.0 <5.0.12': '^5.0.12'
+  # Security fix: zod (high), via eslint-plugin-react-hooks. In-range.
+  'zod@<4.6.6': '^4.6.6'
+  # Security fix: minimatch; fix only exists in 11.0.1 (cross-major). Verified with lint and build.
+  'minimatch@>=7.0.0 <11.0.1': '^11.0.1'
